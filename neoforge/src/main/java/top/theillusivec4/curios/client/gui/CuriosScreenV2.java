@@ -413,12 +413,12 @@ public class CuriosScreenV2 extends EffectRenderingInventoryScreen<CuriosContain
   public boolean mouseScrolled(double p_94686_, double p_94687_, double p_94688_,
                                double p_294830_) {
 
-    if (this.menu.totalPages > 1 && p_94686_ > this.getGuiLeft() &&
-        p_94686_ < this.getGuiLeft() + this.panelWidth && p_94687_ > this.getGuiTop() &&
+    if (this.menu.totalPages > 1 && p_94686_ < this.getGuiLeft() &&
+        p_94686_ > this.getGuiLeft() - this.panelWidth && p_94687_ > this.getGuiTop() &&
         p_94687_ < this.getGuiTop() + this.imageHeight && scrollCooldown <= 0) {
       PacketDistributor.SERVER.noArg()
           .send(new CPacketPage(this.getMenu().containerId, p_294830_ == -1));
-      scrollCooldown = 4;
+      scrollCooldown = 2;
     }
     return super.mouseScrolled(p_94686_, p_94687_, p_94688_, p_294830_);
   }

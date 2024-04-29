@@ -88,7 +88,7 @@ public class CuriosConfig {
 
       maxSlotsPerPage = builder.comment("The maximum number of slots per page of the Curios menu.")
           .translation(CONFIG_PREFIX + "maxSlotsPerPage")
-          .defineInRange("maxSlotsPerPage", 64, 1, 64);
+          .defineInRange("maxSlotsPerPage", 48, 1, 48);
 
       builder.pop();
       builder.pop();
