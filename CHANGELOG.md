@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 Prior to version 5.2.0, this projected used [Forge Recommended Versioning](https://mcforge.readthedocs.io/en/latest/conventions/versioning/).
 
+## [7.4.0+1.20.4] - 2024.04.29
+### Added
+- [API] Added `CuriosApi#getCurioPredicates`
+### Changed
+- New interface no longer shifts the screen to the right
+- Scrolling through pages in the new interface is twice as fast
+- Lowered the maximum value of `maxSlotsPerPage` configuration option from 64 to 48
+### Fixed
+- Fixed generic curio slots from failing validation checks when only those slots exist on an entity [#402](https://github.com/TheIllusiveC4/Curios/issues/402)
+
 ## [7.4.0-beta.2+1.20.4] - 2024.04.08
 ### Fixed
 - Fixed potential backwards compatibility issue
