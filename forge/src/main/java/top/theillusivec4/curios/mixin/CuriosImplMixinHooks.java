@@ -29,7 +29,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
@@ -41,11 +40,12 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.fml.loading.FMLLoader;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.tags.ITagManager;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.CuriosCapability;
 import top.theillusivec4.curios.api.SlotAttribute;
@@ -60,7 +60,6 @@ import top.theillusivec4.curios.common.data.CuriosEntityManager;
 import top.theillusivec4.curios.common.data.CuriosSlotManager;
 import top.theillusivec4.curios.common.network.NetworkHandler;
 import top.theillusivec4.curios.common.network.server.SPacketBreak;
-import top.theillusivec4.curios.common.slottype.SlotType;
 
 public class CuriosImplMixinHooks {
 
@@ -132,7 +131,15 @@ public class CuriosImplMixinHooks {
 
   public static boolean isStackValid(SlotContext slotContext, ItemStack stack) {
     String id = slotContext.identifier();
-    Set<String> slots = getItemStackSlots(stack, slotContext.entity()).keySet();
+    LivingEntity entity = slotContext.entity();
+    Map<String, ISlotType> map;
+
+    if (entity != null) {
+      map = getItemStackSlots(stack, entity);
+    } else {
+      map = getItemStackSlots(stack, FMLLoader.getDist() == Dist.CLIENT);
+    }
+    Set<String> slots = map.keySet();
     return (!slots.isEmpty() && id.equals("curio")) || slots.contains(id) ||
         slots.contains("curio");
   }
@@ -265,11 +272,13 @@ public class CuriosImplMixinHooks {
     SLOT_RESULT_PREDICATES.putIfAbsent(resourceLocation, validator);
   }
 
-  public static Optional<Predicate<SlotResult>> getCurioPredicate(ResourceLocation resourceLocation) {
+  public static Optional<Predicate<SlotResult>> getCurioPredicate(
+      ResourceLocation resourceLocation) {
     return Optional.ofNullable(SLOT_RESULT_PREDICATES.get(resourceLocation));
   }
 
-  public static boolean testCurioPredicates(Set<ResourceLocation> predicates, SlotResult slotResult) {
+  public static boolean testCurioPredicates(Set<ResourceLocation> predicates,
+                                            SlotResult slotResult) {
 
     for (ResourceLocation id : predicates) {
 
