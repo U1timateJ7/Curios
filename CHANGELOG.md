@@ -7,6 +7,7 @@ Prior to version 5.2.0, this projected used [Forge Recommended Versioning](https
 ## [7.4.0+1.20.4] - 2024.04.29
 ### Added
 - [API] Added `CuriosApi#getCurioPredicates`
+- Added `tok` localization
 ### Changed
 - New interface no longer shifts the screen to the right
 - Scrolling through pages in the new interface is twice as fast
