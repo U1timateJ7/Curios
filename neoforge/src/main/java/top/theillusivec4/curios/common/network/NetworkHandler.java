@@ -32,6 +32,7 @@ import top.theillusivec4.curios.common.network.server.CuriosServerPayloadHandler
 import top.theillusivec4.curios.common.network.server.SPacketBreak;
 import top.theillusivec4.curios.common.network.server.SPacketGrabbedItem;
 import top.theillusivec4.curios.common.network.server.SPacketPage;
+import top.theillusivec4.curios.common.network.server.SPacketQuickMove;
 import top.theillusivec4.curios.common.network.server.SPacketScroll;
 import top.theillusivec4.curios.common.network.server.SPacketSetIcons;
 import top.theillusivec4.curios.common.network.server.sync.SPacketSyncCurios;
@@ -80,5 +81,7 @@ public class NetworkHandler {
         handler -> handler.client(CuriosClientPayloadHandler.getInstance()::handlePage));
     registrar.play(SPacketSetIcons.ID, SPacketSetIcons::new,
         handler -> handler.client(CuriosClientPayloadHandler.getInstance()::handleSetIcons));
+    registrar.play(SPacketQuickMove.ID, SPacketQuickMove::new,
+        handler -> handler.client(CuriosClientPayloadHandler.getInstance()::handleQuickMove));
   }
 }

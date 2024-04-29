@@ -27,7 +27,6 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
 import net.minecraftforge.network.Channel;
 import net.minecraftforge.network.ChannelBuilder;
 import net.minecraftforge.network.SimpleChannel;
-import top.theillusivec4.curios.Curios;
 import top.theillusivec4.curios.CuriosConstants;
 import top.theillusivec4.curios.common.network.client.CPacketDestroy;
 import top.theillusivec4.curios.common.network.client.CPacketOpenCurios;
@@ -39,6 +38,7 @@ import top.theillusivec4.curios.common.network.client.CPacketToggleRender;
 import top.theillusivec4.curios.common.network.server.SPacketBreak;
 import top.theillusivec4.curios.common.network.server.SPacketGrabbedItem;
 import top.theillusivec4.curios.common.network.server.SPacketPage;
+import top.theillusivec4.curios.common.network.server.SPacketQuickMove;
 import top.theillusivec4.curios.common.network.server.SPacketScroll;
 import top.theillusivec4.curios.common.network.server.SPacketSetIcons;
 import top.theillusivec4.curios.common.network.server.sync.SPacketSyncCurios;
@@ -94,6 +94,8 @@ public class NetworkHandler {
     register(SPacketSyncData.class, SPacketSyncData::encode, SPacketSyncData::decode,
         SPacketSyncData::handle);
     register(SPacketPage.class, SPacketPage::encode, SPacketPage::decode, SPacketPage::handle);
+    register(SPacketQuickMove.class, SPacketQuickMove::encode, SPacketQuickMove::decode,
+        SPacketQuickMove::handle);
   }
 
   private static <M> void register(Class<M> messageType, BiConsumer<M, FriendlyByteBuf> encoder,

@@ -92,6 +92,7 @@ import top.theillusivec4.curios.common.CuriosConfig;
 import top.theillusivec4.curios.common.CuriosRegistry;
 import top.theillusivec4.curios.common.data.CuriosEntityManager;
 import top.theillusivec4.curios.common.data.CuriosSlotManager;
+import top.theillusivec4.curios.common.inventory.container.CuriosContainerV2;
 import top.theillusivec4.curios.common.network.server.SPacketSetIcons;
 import top.theillusivec4.curios.common.network.server.sync.SPacketSyncCurios;
 import top.theillusivec4.curios.common.network.server.sync.SPacketSyncData;
@@ -521,6 +522,11 @@ public class CuriosEventHandler {
   @SubscribeEvent
   public void tick(LivingEvent.LivingTickEvent evt) {
     LivingEntity livingEntity = evt.getEntity();
+
+    if (livingEntity instanceof Player player &&
+        player.containerMenu instanceof CuriosContainerV2 curiosContainer) {
+      curiosContainer.checkQuickMove();
+    }
 
     CuriosApi.getCuriosInventory(livingEntity).ifPresent(handler -> {
       handler.clearCachedSlotModifiers();

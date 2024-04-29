@@ -36,6 +36,7 @@ import top.theillusivec4.curios.common.inventory.container.CuriosContainerV2;
 import top.theillusivec4.curios.common.network.server.SPacketBreak;
 import top.theillusivec4.curios.common.network.server.SPacketGrabbedItem;
 import top.theillusivec4.curios.common.network.server.SPacketPage;
+import top.theillusivec4.curios.common.network.server.SPacketQuickMove;
 import top.theillusivec4.curios.common.network.server.SPacketScroll;
 import top.theillusivec4.curios.common.network.server.SPacketSetIcons;
 import top.theillusivec4.curios.common.network.server.sync.SPacketSyncCurios;
@@ -98,6 +99,18 @@ public class CuriosClientPayloadHandler {
 
       if (screen instanceof CuriosScreen) {
         ((CuriosScreen) screen).updateRenderButtons();
+      }
+    });
+  }
+
+  public void handleQuickMove(final SPacketQuickMove data, final PlayPayloadContext ctx) {
+    handleData(ctx, () -> {
+      Minecraft mc = Minecraft.getInstance();
+      LocalPlayer clientPlayer = mc.player;
+
+      if (clientPlayer != null &&
+          clientPlayer.containerMenu instanceof CuriosContainerV2 container) {
+        container.quickMoveStack(clientPlayer, data.moveIndex());
       }
     });
   }
