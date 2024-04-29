@@ -22,7 +22,6 @@ package top.theillusivec4.curios.api;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.mojang.logging.LogUtils;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -30,7 +29,6 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import javax.annotation.Nonnull;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -338,6 +336,16 @@ public final class CuriosApi {
       ResourceLocation resourceLocation) {
     apiError();
     return Optional.empty();
+  }
+
+  /**
+   * Gets all registered predicates deciding which slots are assigned to a given {@link ItemStack}.
+   *
+   * @return A map of the registered predicates keyed by {@link ResourceLocation}
+   */
+  public static Map<ResourceLocation, Predicate<SlotResult>> getCurioPredicates() {
+    apiError();
+    return Map.of();
   }
 
   /**
