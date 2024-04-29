@@ -46,7 +46,6 @@ public class CuriosButton extends ImageButton {
       new WidgetSprites(new ResourceLocation(CuriosApi.MODID, "button_small"),
           new ResourceLocation(CuriosApi.MODID, "button_small_highlighted"));
   private final AbstractContainerScreen<?> parentGui;
-  private int panelWidth;
 
   CuriosButton(AbstractContainerScreen<?> parentGui, int xIn, int yIn, int widthIn, int heightIn,
                WidgetSprites sprites) {
@@ -84,7 +83,7 @@ public class CuriosButton extends ImageButton {
                            float partialTicks) {
     Tuple<Integer, Integer> offsets =
         CuriosScreen.getButtonOffset(parentGui instanceof CreativeModeInventoryScreen);
-    this.setX(parentGui.getGuiLeft() + offsets.getA() + 2 + this.panelWidth);
+    this.setX(parentGui.getGuiLeft() + offsets.getA() + 2);
     int yOffset = parentGui instanceof CreativeModeInventoryScreen ? 70 : 85;
     this.setY(parentGui.getGuiTop() + offsets.getB() + yOffset);
 
@@ -97,9 +96,5 @@ public class CuriosButton extends ImageButton {
       }
     }
     super.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
-  }
-
-  public void setPanelWidth(int panelWidth) {
-    this.panelWidth = panelWidth;
   }
 }

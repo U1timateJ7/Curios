@@ -42,7 +42,7 @@ public class CosmeticButton extends ImageButton {
     } else {
       sprites1 = OFF;
     }
-    this.setX(this.parentGui.getGuiLeft() + this.parentGui.panelWidth - 27);
+    this.setX(this.parentGui.getGuiLeft() - 27);
     this.setY(this.parentGui.getGuiTop() - 18);
     ResourceLocation resourcelocation = sprites1.get(this.isActive(), this.isHoveredOrFocused());
     guiGraphics.blitSprite(resourcelocation, this.getX(), this.getY(), this.width, this.height);

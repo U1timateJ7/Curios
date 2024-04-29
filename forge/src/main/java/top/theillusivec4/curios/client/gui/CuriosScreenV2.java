@@ -97,12 +97,11 @@ public class CuriosScreenV2 extends EffectRenderingInventoryScreen<CuriosContain
 
     if (this.minecraft != null) {
       this.panelWidth = this.menu.panelWidth;
-      this.imageWidth = 176 + this.panelWidth;
       this.leftPos = (this.width - this.imageWidth) / 2;
       this.topPos = (this.height - this.imageHeight) / 2;
       this.widthTooNarrow = true;
       this.recipeBookGui
-          .init(this.width, this.height, this.minecraft, this.widthTooNarrow, this.menu);
+          .init(this.width, this.height, this.minecraft, true, this.menu);
       this.addWidget(this.recipeBookGui);
       this.setInitialFocus(this.recipeBookGui);
 
@@ -132,11 +131,11 @@ public class CuriosScreenV2 extends EffectRenderingInventoryScreen<CuriosContain
 
       if (!this.menu.player.isCreative()) {
         this.recipeBookButton =
-            new ImageButton(this.leftPos + 104 + this.panelWidth, this.height / 2 - 22, 20, 18,
+            new ImageButton(this.leftPos + 104, this.height / 2 - 22, 20, 18,
                 RecipeBookComponent.RECIPE_BUTTON_SPRITES, (button) -> {
               this.recipeBookGui.toggleVisibility();
-              button.setPosition(this.leftPos + 104 + this.panelWidth, this.height / 2 - 22);
-              this.buttonCurios.setPosition(this.leftPos + offsets.getA() + this.panelWidth,
+              button.setPosition(this.leftPos + 104, this.height / 2 - 22);
+              this.buttonCurios.setPosition(this.leftPos + offsets.getA() + 2,
                   this.height / 2 + offsets.getB());
             });
         this.addRenderableWidget(this.recipeBookButton);
@@ -156,12 +155,6 @@ public class CuriosScreenV2 extends EffectRenderingInventoryScreen<CuriosContain
         widget -> widget instanceof RenderButton || widget instanceof CosmeticButton ||
             widget instanceof PageButton);
     this.panelWidth = this.menu.panelWidth;
-    this.imageWidth = 176 + this.panelWidth;
-    this.leftPos = (this.width - this.imageWidth) / 2;
-
-    if (this.recipeBookButton != null) {
-      this.recipeBookButton.setPosition(this.leftPos + 104 + this.panelWidth, this.height / 2 - 22);
-    }
 
     if (this.menu.hasCosmetics) {
       this.cosmeticButton =
@@ -203,7 +196,6 @@ public class CuriosScreenV2 extends EffectRenderingInventoryScreen<CuriosContain
   @Override
   public void render(@Nonnull GuiGraphics guiGraphics, int mouseX, int mouseY,
                      float partialTicks) {
-    this.buttonCurios.setPanelWidth(this.panelWidth);
 
     if (this.recipeBookGui.isVisible() && this.widthTooNarrow) {
       this.renderBackground(guiGraphics, mouseX, mouseY, partialTicks);
@@ -284,7 +276,7 @@ public class CuriosScreenV2 extends EffectRenderingInventoryScreen<CuriosContain
   protected void renderLabels(@Nonnull GuiGraphics guiGraphics, int mouseX, int mouseY) {
 
     if (this.minecraft != null && this.minecraft.player != null) {
-      guiGraphics.drawString(this.font, this.title, 97 + panelWidth, 6, 4210752, false);
+      guiGraphics.drawString(this.font, this.title, 97, 6, 4210752, false);
     }
   }
 
@@ -302,9 +294,7 @@ public class CuriosScreenV2 extends EffectRenderingInventoryScreen<CuriosContain
         scrollCooldown--;
       }
       this.panelWidth = this.menu.panelWidth;
-      this.imageWidth = 176 + this.panelWidth;
-      this.leftPos = (this.width - this.imageWidth) / 2;
-      int i = this.leftPos + this.panelWidth;
+      int i = this.leftPos;
       int j = this.topPos;
       guiGraphics.blit(INVENTORY_LOCATION, i, j, 0, 0, 176, this.imageHeight);
       InventoryScreen.renderEntityInInventoryFollowsMouse(guiGraphics, i + 26, j + 8, i + 75,
