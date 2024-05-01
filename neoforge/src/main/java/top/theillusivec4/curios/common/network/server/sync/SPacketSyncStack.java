@@ -39,7 +39,7 @@ public record SPacketSyncStack(int entityId, String curioId, int slotId, ItemSta
   public static final StreamCodec<RegistryFriendlyByteBuf, SPacketSyncStack> STREAM_CODEC =
       StreamCodec.composite(ByteBufCodecs.INT, SPacketSyncStack::entityId,
           ByteBufCodecs.STRING_UTF8, SPacketSyncStack::curioId, ByteBufCodecs.INT,
-          SPacketSyncStack::slotId, ItemStack.STREAM_CODEC, SPacketSyncStack::stack,
+          SPacketSyncStack::slotId, ItemStack.OPTIONAL_STREAM_CODEC, SPacketSyncStack::stack,
           ByteBufCodecs.INT, SPacketSyncStack::handlerType, ByteBufCodecs.COMPOUND_TAG,
           SPacketSyncStack::compoundTag, SPacketSyncStack::new);
 

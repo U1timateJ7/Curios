@@ -610,7 +610,7 @@ public class CuriosEventHandler {
 
                   for (Holder<Attribute> attribute : map.keySet()) {
 
-                    if (attribute instanceof SlotAttribute wrapper) {
+                    if (attribute.value() instanceof SlotAttribute wrapper) {
                       slots.putAll(wrapper.getIdentifier(), map.get(attribute));
                       toRemove.add(attribute);
                     }

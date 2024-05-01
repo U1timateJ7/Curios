@@ -233,7 +233,7 @@ public class ClientEventHandler {
                   d1 = amount * 100.0D;
                 }
 
-                if (entry.getKey() instanceof SlotAttribute slotAttribute) {
+                if (entry.getKey().value() instanceof SlotAttribute slotAttribute) {
 
                   if (amount > 0.0D) {
                     attributeTooltip.add((Component.translatable(

@@ -519,6 +519,18 @@ public class CuriosContainer extends RecipeBookMenu<CraftingContainer> implement
     }
   }
 
+  @Nonnull
+  @Override
+  public Slot getSlot(int index) {
+
+    if (index < 0) {
+      return super.getSlot(0);
+    } else if (index >= this.slots.size()) {
+      return super.getSlot(this.slots.size() - 1);
+    }
+    return super.getSlot(index);
+  }
+
   private record ProxySlot(int page, Slot slot) {
 
   }

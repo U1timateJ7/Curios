@@ -58,24 +58,24 @@ public class NetworkHandler {
 
     // Server Packets
     registrar.playToClient(SPacketSyncStack.TYPE, SPacketSyncStack.STREAM_CODEC,
-        CuriosClientPayloadHandler.getInstance()::handleSyncStack);
+        CuriosClientPayloadHandler.getInstance()::handle);
     registrar.playToClient(SPacketGrabbedItem.TYPE, SPacketGrabbedItem.STREAM_CODEC,
-        CuriosClientPayloadHandler.getInstance()::handleGrabbedItem);
+        CuriosClientPayloadHandler.getInstance()::handle);
     registrar.playToClient(SPacketSyncCurios.TYPE, SPacketSyncCurios.STREAM_CODEC,
-        CuriosClientPayloadHandler.getInstance()::handleSyncCurios);
+        CuriosClientPayloadHandler.getInstance()::handle);
     registrar.playToClient(SPacketSyncData.TYPE, SPacketSyncData.STREAM_CODEC,
-        CuriosClientPayloadHandler.getInstance()::handleSyncData);
+        CuriosClientPayloadHandler.getInstance()::handle);
     registrar.playToClient(SPacketSyncModifiers.TYPE, SPacketSyncModifiers.STREAM_CODEC,
-        CuriosClientPayloadHandler.getInstance()::handleSyncModifiers);
+        CuriosClientPayloadHandler.getInstance()::handle);
     registrar.playToClient(SPacketSyncRender.TYPE, SPacketSyncRender.STREAM_CODEC,
-        CuriosClientPayloadHandler.getInstance()::handleSyncRender);
+        CuriosClientPayloadHandler.getInstance()::handle);
     registrar.playToClient(SPacketBreak.TYPE, SPacketBreak.STREAM_CODEC,
-        CuriosClientPayloadHandler.getInstance()::handleBreak);
+        CuriosClientPayloadHandler.getInstance()::handle);
     registrar.playToClient(SPacketPage.TYPE, SPacketPage.STREAM_CODEC,
-        CuriosClientPayloadHandler.getInstance()::handlePage);
+        CuriosClientPayloadHandler.getInstance()::handle);
     registrar.playToClient(SPacketSetIcons.TYPE, SPacketSetIcons.STREAM_CODEC,
-        CuriosClientPayloadHandler.getInstance()::handleSetIcons);
+        CuriosClientPayloadHandler.getInstance()::handle);
     registrar.playToClient(SPacketQuickMove.TYPE, SPacketQuickMove.STREAM_CODEC,
-        CuriosClientPayloadHandler.getInstance()::handleQuickMove);
+        CuriosClientPayloadHandler.getInstance()::handle);
   }
 }

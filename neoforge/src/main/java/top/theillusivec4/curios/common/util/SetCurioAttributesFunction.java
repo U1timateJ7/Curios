@@ -109,7 +109,7 @@ public class SetCurioAttributesFunction extends LootItemConditionalFunction {
       UUID uuid = modifier.id.orElse(null);
       String slot = Util.getRandom(modifier.slots, random);
 
-      if (modifier.attribute instanceof SlotAttribute wrapper) {
+      if (modifier.attribute.value() instanceof SlotAttribute wrapper) {
         CuriosApi.addSlotModifier(stack, wrapper.getIdentifier(), modifier.name, uuid,
             modifier.amount.getFloat(context), modifier.operation, slot);
       } else {
