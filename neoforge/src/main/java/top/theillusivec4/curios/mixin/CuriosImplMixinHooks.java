@@ -22,6 +22,7 @@ package top.theillusivec4.curios.mixin;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -249,12 +250,16 @@ public class CuriosImplMixinHooks {
     } else {
       rl = BuiltInRegistries.ATTRIBUTE.getKey(attribute.value());
     }
+
+    if (uuid == null) {
+      uuid = UUID.randomUUID();
+    }
     AttributeModifier attributeModifier = new AttributeModifier(uuid, name, amount, operation);
     CurioAttributeModifiers.Entry entry =
         new CurioAttributeModifiers.Entry(rl, attributeModifier, slot);
     CurioAttributeModifiers curioAttributeModifiers =
         stack.getOrDefault(CuriosRegistry.CURIO_ATTRIBUTE_MODIFIERS, CurioAttributeModifiers.EMPTY);
-    List<CurioAttributeModifiers.Entry> list = curioAttributeModifiers.modifiers();
+    List<CurioAttributeModifiers.Entry> list = new ArrayList<>(curioAttributeModifiers.modifiers());
     list.add(entry);
     stack.set(CuriosRegistry.CURIO_ATTRIBUTE_MODIFIERS,
         new CurioAttributeModifiers(list, curioAttributeModifiers.showInTooltip()));

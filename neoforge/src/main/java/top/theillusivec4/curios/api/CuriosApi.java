@@ -272,7 +272,7 @@ public final class CuriosApi {
    *
    * @param map        A {@link Multimap} of attributes to attribute modifiers
    * @param identifier The identifier of the slot to add the modifier onto
-   * @param uuid       A UUID associated wth the slot
+   * @param uuid       A UUID associated with the modifier
    * @param amount     The amount of the modifier
    * @param operation  The operation of the modifier
    */
@@ -288,7 +288,7 @@ public final class CuriosApi {
    * @param stack      The ItemStack to add the modifier to
    * @param identifier The identifier of the slot to add the modifier onto
    * @param name       The name for the modifier
-   * @param uuid       A UUID associated wth the modifier
+   * @param uuid       A UUID associated with the modifier
    * @param amount     The amount of the modifier
    * @param operation  The operation of the modifier
    * @param slot       The slot that the ItemStack provides the modifier from
@@ -304,7 +304,7 @@ public final class CuriosApi {
    *
    * @param itemAttributeModifiers A {@link ItemAttributeModifiers} instance
    * @param identifier             The identifier of the slot to add the modifier onto
-   * @param uuid                   A UUID associated wth the modifier, or null if the slot UUID should be used
+   * @param uuid                   A UUID associated with the modifier
    * @param amount                 The amount of the modifier
    * @param operation              The operation of the modifier
    * @param slotGroup              The slot to provide the modifier from
@@ -322,7 +322,7 @@ public final class CuriosApi {
    * @param stack     The ItemStack to add the modifier to
    * @param attribute The attribute to add the modifier onto
    * @param name      The name for the modifier
-   * @param uuid      A UUID associated wth the modifier, or null if the slot UUID should be used
+   * @param uuid      A UUID associated with the modifier
    * @param amount    The amount of the modifier
    * @param operation The operation of the modifier
    * @param slot      The slot that the ItemStack provides the modifier from
