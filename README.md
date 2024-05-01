@@ -1,64 +1,30 @@
-# Curios API [![](http://cf.way2muchnoise.eu/versions/curios.svg)](https://www.curseforge.com/minecraft/mc-mods/curios) [![](http://cf.way2muchnoise.eu/short_curios_downloads.svg)](https://www.curseforge.com/minecraft/mc-mods/curios/files) [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg?&style=flat-square)](https://www.gnu.org/licenses/lgpl-3.0) [![](https://img.shields.io/discord/500852157503766538.svg?color=green&label=Discord&style=flat-square)](https://discord.gg/JWgrdwt)
+# MultiLoader Template
 
-## Overview
+This project provides a Gradle project template that can compile mods for multiple modloaders using a common sourceset. This project does not require any third party libraries or dependencies. If you have any questions or want to discuss the project join our [Discord](https://discord.myceliummod.network).
 
-Curios is a flexible and expandable accessory/equipment API for users and developers. The purpose is to provide functionality for developers to add extra accessory/equipment slots in a convenient and compatible manner, as well as to give users the ability to configure these slots to their preferences. By default, Curios does not add any content except for an inventory GUI. There are no slots and only two items, the latter only being available through the Creative menu and primarily serving as examples for developers to use when coding their own integration.
+## Getting Started
 
-## Features
+### IntelliJ IDEA
+This guide will show how to import the MultiLoader Template into IntelliJ IDEA. The setup process is roughly equivalent to setting up the modloaders independently and should be very familiar to anyone who has worked with their MDKs.
 
-* **Expandable equipment slots through a central library.** New equipment slots can be made and managed easily through an identifier registry. Identical identifiers will be merged together to avoid functional redundancies and provide maximum compatibility to potential items, while unique identifiers can still be used to mark special types when appropriate.
-* **Slots are only made on-demand.** There are no slots included by default, all slots are created only as needed. This reduces instances where one or more superfluous slots are present without any suitable items to go into the slot.
-* **Slots are completely customizable and manipulable.** Slots can have custom backgrounds, different sizes, and can even be disabled or hidden by default. But how would a player even access disabled slots? Through the API, developers can access functions to enable/disable a player's slots or add/remove a certain number of slots of a given type.
-* **Flexible item->curio relations using the vanilla tag system.** Potential curios are selected through the vanilla tag system, which means that categorizing items into curio types is as easy as creating a .json file in the data/curios/tags folder. Items can be categorized into as many curio types as you want as long as they're tagged in the appropriate files, and these settings can even be overridden entirely. For more information, see the vanilla tag system.
-* **Complete integration with other inventory mechanics.** Mending and Curses will work with all applicable items equipped in the curio slots. There are also various minor features for developers that make it simpler to integrate their current items or mechanics into the curio system.
-* **Accessible from a single GUI.** Curios comes with its own GUI accessible from the inventory that shows all of the available slots to a player. This allows players to see all of the extended equipment slots in a central location without needing to access different inventory GUIs. However, developers can still provide their own GUIs for their mod-specific slots if they want. The default keybinding for the GUI is 'g'.
+1. Clone or download this repository to your computer.
+2. Configure the project by editing the `group`, `mod_name`, `mod_author`, and `mod_id` properties in the `gradle.properties` file. You will also need to change the `rootProject.name`  property in `settings.gradle`, this should match the folder name of your project, or else IDEA may complain.
+3. Open the template's root folder as a new project in IDEA. This is the folder that contains this README file and the gradlew executable.
+4. If your default JVM/JDK is not Java 21 you will encounter an error when opening the project. This error is fixed by going to `File > Settings > Build, Execution, Deployment > Build Tools > Gradle > Gradle JVM` and changing the value to a valid Java 21 JVM. You will also need to set the Project SDK to Java 21. This can be done by going to `File > Project Structure > Project SDK`. Once both have been set open the Gradle tab in IDEA and click the refresh button to reload the project.
+5. Open the Gradle tab in IDEA if it has not already been opened. Navigate to `Your Project > Common > Tasks > vanilla gradle > decompile`. Run this task to decompile Minecraft.
+6. Open your Run/Debug Configurations. Under the Application category there should now be options to run NeoForge and Fabric projects. Select one of the client options and try to run it.
+7. Assuming you were able to run the game in step 7 your workspace should now be set up.
 
-## Documentation
+### Eclipse
+While it is possible to use this template in Eclipse it is not recommended. During the development of this template multiple critical bugs and quirks related to Eclipse were found at nearly every level of the required build tools. While we continue to work with these tools to report and resolve issues support for projects like these are not there yet. For now Eclipse is considered unsupported by this project. The development cycle for build tools is notoriously slow so there are no ETAs available.
 
-* [1.20.x Curios Documentation](https://docs.illusivesoulworks.com/category/curios)
+## Development Guide
+When using this template the majority of your mod is developed in the Common project. The Common project is compiled against the vanilla game and is used to hold code that is shared between the different loader-specific versions of your mod. The Common project has no knowledge or access to ModLoader specific code, apis, or concepts. Code that requires something from a specific loader must be done through the project that is specific to that loader, such as the NeoForge or Fabric project.
 
-## Adding to Your Project:
+Loader specific projects such as the NeoForge and Fabric project are used to load the Common project into the game. These projects also define code that is specific to that loader. Loader specific projects can access all of the code in the Common project. It is important to remember that the Common project can not access code from loader specific projects.
 
-Add the following to your build.gradle file:
-```
-repositories {
-    maven {
-        url = "https://maven.theillusivec4.top/"
-    }
-}
-```
+## Removing Platforms and Loaders
+While the MultiLoader Template includes support for many platforms and loaders you can easily remove support for the ones you don't need. This can be done by deleting the subproject folder and then removing it from the `settings.gradle` file. For example if you wanted to remove support for Forge you would follow the following steps. 
 
-### Forge
-```
-dependencies {
-    runtimeOnly fg.deobf("top.theillusivec4.curios:curios-forge:${version}")
-    compileOnly fg.deobf("top.theillusivec4.curios:curios-forge:${version}:api")
-}
-```
-
-Curios uses mixins and developers will need to make sure to tweak their run configurations in order to launch the game
-in their development environment with Curios as a dependency in Forge.
-
-#### 1. Add these lines to your run configurations
-
-Add both of these lines to both the `client {}` and `server {}` run configuration blocks in the `build.gradle`. These
-can be placed anywhere within each run configuration, the order does not matter.
-
-```
-property 'mixin.env.remapRefMap', 'true'
-property 'mixin.env.refMapRemappingFile', "${buildDir}/createSrgToMcp/output.srg"
-```
-
-#### 2. Regenerate your run configurations
-
-Run the Gradle task `genIntellijRuns`, `genEclipseRuns`, or `genVSCodeRuns` depending on the chosen IDE.
-
-### NeoForge (1.20.2+)
-```
-dependencies {
-    runtimeOnly "top.theillusivec4.curios:curios-neoforge:${version}"
-    compileOnly "top.theillusivec4.curios:curios-neoforge:${version}:api"
-}
-```
-
-Replace ${version} with the version of Curios that you want to use.
+1. Delete the subproject folder. For example, delete `MultiLoader-Template/forge`.
+2. Remove the project from `settings.gradle`. For example, remove `include("forge")`. 

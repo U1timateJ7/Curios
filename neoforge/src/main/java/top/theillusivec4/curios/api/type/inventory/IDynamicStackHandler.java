@@ -20,6 +20,7 @@
 package top.theillusivec4.curios.api.type.inventory;
 
 import javax.annotation.Nonnull;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
@@ -84,12 +85,12 @@ public interface IDynamicStackHandler extends IItemHandlerModifiable {
    *
    * @return A {@link CompoundTag} representing the serialized data
    */
-  CompoundTag serializeNBT();
+  CompoundTag serializeNBT(HolderLookup.Provider provider);
 
   /**
    * Reads the data into this handler.
    *
    * @param nbt A {@link CompoundTag} representing the serialized data
    */
-  void deserializeNBT(CompoundTag nbt);
+  void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt);
 }

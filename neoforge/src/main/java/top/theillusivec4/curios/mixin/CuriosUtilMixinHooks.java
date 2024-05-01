@@ -134,8 +134,7 @@ public class CuriosUtilMixinHooks {
           if (!stack.isEmpty()) {
             CompoundTag tag = new CompoundTag();
             tag.putByte("Slot", (byte) (4444 + i));
-            stack.save(tag);
-            list.add(tag);
+            list.add(stack.save(livingEntity.registryAccess(), tag));
           }
         }
         return compoundTag;
@@ -146,8 +145,8 @@ public class CuriosUtilMixinHooks {
 
   public static boolean containsStack(Player player, ItemStack stack) {
     return CuriosApi.getCuriosInventory(player).map(inv -> inv.findFirstCurio(
-            stack2 -> !stack2.isEmpty() && ItemStack.isSameItemSameTags(stack, stack2)).isPresent())
-        .orElse(false);
+            stack2 -> !stack2.isEmpty() && ItemStack.isSameItemSameComponents(stack, stack2))
+        .isPresent()).orElse(false);
   }
 
   public static boolean containsTag(Player player, TagKey<Item> tagKey) {

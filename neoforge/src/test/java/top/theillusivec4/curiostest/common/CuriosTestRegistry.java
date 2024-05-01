@@ -24,7 +24,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ArmorMaterials;
 import net.minecraft.world.item.Item;
-import net.neoforged.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import top.theillusivec4.curiostest.CuriosTest;
 import top.theillusivec4.curiostest.common.item.AmuletItem;
@@ -47,7 +47,7 @@ public class CuriosTestRegistry {
       () -> new TestArmor(ArmorMaterials.DIAMOND, ArmorItem.Type.CHESTPLATE,
           new Item.Properties()));
 
-  public static void init() {
-    ITEMS.register(FMLJavaModLoadingContext.get().getModEventBus());
+  public static void init(IEventBus eventBus) {
+    ITEMS.register(eventBus);
   }
 }

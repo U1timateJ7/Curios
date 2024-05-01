@@ -19,11 +19,13 @@
 
 package top.theillusivec4.curios.api.type.capability;
 
+import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nonnull;
+import net.minecraft.core.Holder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
@@ -149,9 +151,9 @@ public interface ICurioItem {
    * @param uuid        Slot-unique UUID
    * @return A map of attribute modifiers to apply
    */
-  default Multimap<Attribute, AttributeModifier> getAttributeModifiers(SlotContext slotContext,
-                                                                       UUID uuid, ItemStack stack) {
-    return getAttributeModifiers(slotContext.identifier(), stack);
+  default Multimap<Holder<Attribute>, AttributeModifier> getAttributeModifiers(
+      SlotContext slotContext, UUID uuid, ItemStack stack) {
+    return LinkedHashMultimap.create();
   }
 
   /**
@@ -178,7 +180,7 @@ public interface ICurioItem {
    */
   @Nonnull
   default ICurio.SoundInfo getEquipSound(SlotContext slotContext, ItemStack stack) {
-    return new ICurio.SoundInfo(SoundEvents.ARMOR_EQUIP_GENERIC, 1.0f, 1.0f);
+    return new ICurio.SoundInfo(SoundEvents.ARMOR_EQUIP_GENERIC.value(), 1.0f, 1.0f);
   }
 
   /**
@@ -433,17 +435,6 @@ public interface ICurioItem {
   @ApiStatus.ScheduledForRemoval(inVersion = "1.21")
   default boolean canRightClickEquip(ItemStack stack) {
     return defaultInstance.canRightClickEquip();
-  }
-
-  /**
-   * @deprecated See {@link ICurioItem#getAttributeModifiers(SlotContext, UUID, ItemStack)} for an
-   * alternative method with additional context and a slot-unique UUID parameter.
-   */
-  @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "1.21")
-  default Multimap<Attribute, AttributeModifier> getAttributeModifiers(String identifier,
-                                                                       ItemStack stack) {
-    return defaultInstance.getAttributeModifiers(identifier);
   }
 
   /**

@@ -25,6 +25,8 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import top.theillusivec4.curios.CuriosConstants;
@@ -32,8 +34,27 @@ import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
 
 public class SPacketSyncModifiers implements CustomPacketPayload {
 
-  public static final ResourceLocation ID =
-      new ResourceLocation(CuriosConstants.MOD_ID, "sync_modifiers");
+  public static final Type<SPacketSyncModifiers> TYPE =
+      new Type<>(new ResourceLocation(CuriosConstants.MOD_ID, "sync_modifiers"));
+  public static final StreamCodec<RegistryFriendlyByteBuf, SPacketSyncModifiers> STREAM_CODEC =
+      new StreamCodec<>() {
+        @Nonnull
+        @Override
+        public SPacketSyncModifiers decode(@Nonnull RegistryFriendlyByteBuf buf) {
+          return new SPacketSyncModifiers(buf);
+        }
+
+        @Override
+        public void encode(@Nonnull RegistryFriendlyByteBuf buf, SPacketSyncModifiers packet) {
+          buf.writeInt(packet.entityId);
+          buf.writeInt(packet.entrySize);
+
+          for (Map.Entry<String, CompoundTag> entry : packet.updates.entrySet()) {
+            buf.writeUtf(entry.getKey());
+            buf.writeNbt(entry.getValue());
+          }
+        }
+      };
 
   public final int entityId;
   public final int entrySize;
@@ -50,12 +71,6 @@ public class SPacketSyncModifiers implements CustomPacketPayload {
     this.updates = result;
   }
 
-  public SPacketSyncModifiers(Map<String, CompoundTag> map, int entityId) {
-    this.entityId = entityId;
-    this.entrySize = map.size();
-    this.updates = map;
-  }
-
   public SPacketSyncModifiers(final FriendlyByteBuf buf) {
     int entityId = buf.readInt();
     int entrySize = buf.readInt();
@@ -70,20 +85,9 @@ public class SPacketSyncModifiers implements CustomPacketPayload {
     this.updates = map;
   }
 
-  @Override
-  public void write(@Nonnull FriendlyByteBuf buf) {
-    buf.writeInt(this.entityId);
-    buf.writeInt(this.entrySize);
-
-    for (Map.Entry<String, CompoundTag> entry : this.updates.entrySet()) {
-      buf.writeUtf(entry.getKey());
-      buf.writeNbt(entry.getValue());
-    }
-  }
-
   @Nonnull
   @Override
-  public ResourceLocation id() {
-    return ID;
+  public Type<? extends CustomPacketPayload> type() {
+    return TYPE;
   }
 }

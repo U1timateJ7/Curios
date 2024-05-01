@@ -40,11 +40,6 @@ public class CuriosContainerProvider implements MenuProvider {
   @Override
   public AbstractContainerMenu createMenu(int i, @Nonnull Inventory playerInventory,
                               @Nonnull Player playerEntity) {
-
-    if (CuriosConfig.SERVER.enableExperimentalMenu.get()) {
-      return new CuriosContainerV2(i, playerInventory);
-    } else {
-      return new CuriosContainer(i, playerInventory);
-    }
+    return new CuriosContainer(i, playerInventory);
   }
 }

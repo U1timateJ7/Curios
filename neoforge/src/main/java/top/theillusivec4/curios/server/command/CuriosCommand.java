@@ -269,8 +269,8 @@ public class CuriosCommand {
   private static int resetSlotsForPlayer(CommandSourceStack source, ServerPlayer playerMP) {
     CuriosApi.getCuriosHelper().getCuriosHandler(playerMP).ifPresent(handler -> {
       handler.reset();
-      PacketDistributor.PLAYER.with(playerMP)
-          .send(new SPacketSyncCurios(playerMP.getId(), handler.getCurios()));
+      PacketDistributor.sendToPlayersTrackingEntityAndSelf(playerMP,
+          new SPacketSyncCurios(playerMP.getId(), handler.getCurios()));
     });
     source.sendSuccess(
         () -> Component.translatable("commands.curios.reset.success", playerMP.getDisplayName()),

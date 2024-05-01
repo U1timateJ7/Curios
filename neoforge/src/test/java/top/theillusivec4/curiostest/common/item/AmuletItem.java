@@ -51,7 +51,7 @@ public class AmuletItem extends Item implements ICurioItem, ICurioRenderer {
   private Object model;
 
   public AmuletItem() {
-    super(new Item.Properties().stacksTo(1).defaultDurability(0));
+    super(new Item.Properties().stacksTo(1).durability(0));
   }
 
   @Override
@@ -66,7 +66,7 @@ public class AmuletItem extends Item implements ICurioItem, ICurioRenderer {
   @Nonnull
   @Override
   public ICurio.SoundInfo getEquipSound(SlotContext slotContext, ItemStack stack) {
-    return new ICurio.SoundInfo(SoundEvents.ARMOR_EQUIP_GOLD, 1.0f, 1.0f);
+    return new ICurio.SoundInfo(SoundEvents.ARMOR_EQUIP_GOLD.value(), 1.0f, 1.0f);
   }
 
   @Override

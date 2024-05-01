@@ -31,6 +31,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -63,12 +64,7 @@ public class CuriosSelectorOptions {
       min = Math.max(0, listTag.getInt(0));
       max = Math.max(min + 1, listTag.getInt(1));
     }
-    ItemStack stack =
-        compoundtag.contains("item") ? ItemStack.of(compoundtag.getCompound("item")) : null;
-
-    if (stack != null) {
-      stack.setCount(Math.max(1, stack.getCount()));
-    }
+    CompoundTag stack = compoundtag.contains("item") ? compoundtag.getCompound("item") : new CompoundTag();
     boolean exclusive = compoundtag.getBoolean("exclusive");
     int finalMin = min;
     int finalMax = max;
@@ -77,13 +73,17 @@ public class CuriosSelectorOptions {
   }
 
   private static boolean matches(Entity entity, Set<String> slots, int min, int max,
-                                 ItemStack stack,
-                                 boolean invert, boolean exclusive) {
+                                 CompoundTag inputStack, boolean invert, boolean exclusive) {
     if (entity instanceof LivingEntity livingEntity) {
+      ItemStack stack = ItemStack.parseOptional(livingEntity.registryAccess(), inputStack);
+
+      if (!stack.isEmpty()) {
+        stack.setCount(Math.max(1, stack.getCount()));
+      }
       return CuriosApi.getCuriosHelper().getCuriosHandler(livingEntity).map(handler -> {
         Map<String, ICurioStacksHandler> curios = handler.getCurios();
 
-        if (stack != null) {
+        if (!stack.isEmpty()) {
 
           if (exclusive) {
             return hasOnlyItem(curios, slots, min, max, stack, invert);

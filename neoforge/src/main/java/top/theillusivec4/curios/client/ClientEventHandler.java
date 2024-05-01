@@ -19,7 +19,7 @@
 
 package top.theillusivec4.curios.client;
 
-import static net.minecraft.world.item.ItemStack.ATTRIBUTE_MODIFIER_FORMAT;
+import static net.minecraft.world.item.component.ItemAttributeModifiers.ATTRIBUTE_MODIFIER_FORMAT;
 
 import com.google.common.collect.Multimap;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -32,11 +32,10 @@ import java.util.UUID;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.contents.TranslatableContents;
-import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -47,8 +46,8 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.loading.FMLLoader;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
-import net.neoforged.neoforge.event.TickEvent;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import top.theillusivec4.curios.api.CuriosApi;
@@ -57,7 +56,6 @@ import top.theillusivec4.curios.api.SlotContext;
 import top.theillusivec4.curios.api.type.ICuriosMenu;
 import top.theillusivec4.curios.api.type.ISlotType;
 import top.theillusivec4.curios.api.type.capability.ICurio;
-import top.theillusivec4.curios.common.inventory.container.CuriosContainer;
 import top.theillusivec4.curios.common.network.client.CPacketOpenCurios;
 
 public class ClientEventHandler {
@@ -68,15 +66,11 @@ public class ClientEventHandler {
       .fromString("FA233E1C-4180-4865-B01B-BCCE9785ACA3");
 
   @SubscribeEvent
-  public void onClientTick(TickEvent.ClientTickEvent evt) {
-
-    if (evt.phase != TickEvent.Phase.END) {
-      return;
-    }
+  public void onClientTick(ClientTickEvent.Post evt) {
     Minecraft mc = Minecraft.getInstance();
 
     if (KeyRegistry.openCurios.consumeClick() && mc.isWindowActive()) {
-      PacketDistributor.SERVER.noArg().send(new CPacketOpenCurios(ItemStack.EMPTY));
+      PacketDistributor.sendToServer(new CPacketOpenCurios(ItemStack.EMPTY));
     }
   }
 
@@ -137,13 +131,6 @@ public class ClientEventHandler {
           }
         }
       }
-      CompoundTag tag = stack.getTag();
-      int i = 0;
-
-      if (tag != null && tag.contains("HideFlags", 99)) {
-        i = tag.getInt("HideFlags");
-      }
-
       Map<String, ISlotType> map = player != null ? CuriosApi.getItemStackSlots(stack, player) :
           CuriosApi.getItemStackSlots(stack, FMLLoader.getDist() == Dist.CLIENT);
       Set<String> curioTags = Set.copyOf(map.keySet());
@@ -187,14 +174,14 @@ public class ClientEventHandler {
         List<Component> attributeTooltip = new ArrayList<>();
 
         for (String identifier : slots) {
-          Multimap<Attribute, AttributeModifier> multimap =
+          Multimap<Holder<Attribute>, AttributeModifier> multimap =
               CuriosApi.getAttributeModifiers(new SlotContext(identifier, player, 0, false, true),
                   UUID.randomUUID(), stack);
 
-          if (!multimap.isEmpty() && (i & 2) == 0) {
+          if (!multimap.isEmpty()) {
             boolean init = false;
 
-            for (Map.Entry<Attribute, AttributeModifier> entry : multimap.entries()) {
+            for (Map.Entry<Holder<Attribute>, AttributeModifier> entry : multimap.entries()) {
 
               // Some mods are adding null attributes so add a guard here to not crash the client
               if (entry.getKey() == null) {
@@ -208,21 +195,20 @@ public class ClientEventHandler {
                 init = true;
               }
               AttributeModifier attributemodifier = entry.getValue();
-              double amount = attributemodifier.getAmount();
+              double amount = attributemodifier.amount();
               boolean flag = false;
 
               if (player != null) {
 
-                if (attributemodifier.getId() == ATTACK_DAMAGE_MODIFIER) {
+                if (attributemodifier.id() == ATTACK_DAMAGE_MODIFIER) {
                   AttributeInstance att = player.getAttribute(Attributes.ATTACK_DAMAGE);
 
                   if (att != null) {
                     amount = amount + att.getBaseValue();
                   }
-                  amount = amount + EnchantmentHelper
-                      .getDamageBonus(stack, MobType.UNDEFINED);
+                  amount = amount + EnchantmentHelper.getDamageBonus(stack, null);
                   flag = true;
-                } else if (attributemodifier.getId() == ATTACK_SPEED_MODIFIER) {
+                } else if (attributemodifier.id() == ATTACK_SPEED_MODIFIER) {
                   AttributeInstance att = player.getAttribute(Attributes.ATTACK_SPEED);
 
                   if (att != null) {
@@ -233,9 +219,10 @@ public class ClientEventHandler {
 
                 double d1;
 
-                if (attributemodifier.getOperation() != AttributeModifier.Operation.MULTIPLY_BASE
-                    && attributemodifier.getOperation() !=
-                    AttributeModifier.Operation.MULTIPLY_TOTAL) {
+                if (attributemodifier.operation() !=
+                    AttributeModifier.Operation.ADD_MULTIPLIED_BASE &&
+                    attributemodifier.operation() !=
+                        AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL) {
 
                   if (entry.getKey().equals(Attributes.KNOCKBACK_RESISTANCE)) {
                     d1 = amount * 10.0D;
@@ -251,7 +238,7 @@ public class ClientEventHandler {
                   if (amount > 0.0D) {
                     attributeTooltip.add((Component.translatable(
                         "curios.modifiers.slots.plus." +
-                            attributemodifier.getOperation().toValue(),
+                            attributemodifier.operation().id(),
                         ATTRIBUTE_MODIFIER_FORMAT.format(d1),
                         Component.translatable(
                             "curios.identifier." + slotAttribute.getIdentifier())))
@@ -260,7 +247,7 @@ public class ClientEventHandler {
                     d1 = d1 * -1.0D;
                     attributeTooltip.add((Component.translatable(
                         "curios.modifiers.slots.take." +
-                            attributemodifier.getOperation().toValue(),
+                            attributemodifier.operation().id(),
                         ATTRIBUTE_MODIFIER_FORMAT.format(d1),
                         Component.translatable(
                             "curios.identifier." + slotAttribute.getIdentifier())))
@@ -269,22 +256,22 @@ public class ClientEventHandler {
                 } else if (flag) {
                   attributeTooltip.add(
                       (Component.literal(" ")).append(Component.translatable(
-                              "attribute.modifier.equals." + attributemodifier.getOperation().toValue(),
+                              "attribute.modifier.equals." + attributemodifier.operation().id(),
                               ATTRIBUTE_MODIFIER_FORMAT.format(d1),
-                              Component.translatable(entry.getKey().getDescriptionId())))
+                              Component.translatable(entry.getKey().value().getDescriptionId())))
                           .withStyle(ChatFormatting.DARK_GREEN));
                 } else if (amount > 0.0D) {
                   attributeTooltip.add((Component.translatable(
-                      "attribute.modifier.plus." + attributemodifier.getOperation().toValue(),
+                      "attribute.modifier.plus." + attributemodifier.operation().id(),
                       ATTRIBUTE_MODIFIER_FORMAT.format(d1),
-                      Component.translatable(entry.getKey().getDescriptionId())))
+                      Component.translatable(entry.getKey().value().getDescriptionId())))
                       .withStyle(ChatFormatting.BLUE));
                 } else if (amount < 0.0D) {
                   d1 = d1 * -1.0D;
                   attributeTooltip.add((Component.translatable(
-                      "attribute.modifier.take." + attributemodifier.getOperation().toValue(),
+                      "attribute.modifier.take." + attributemodifier.operation().id(),
                       ATTRIBUTE_MODIFIER_FORMAT.format(d1),
-                      Component.translatable(entry.getKey().getDescriptionId())))
+                      Component.translatable(entry.getKey().value().getDescriptionId())))
                       .withStyle(ChatFormatting.RED));
                 }
               }
@@ -300,7 +287,7 @@ public class ClientEventHandler {
           }
         });
 
-        if (!optionalCurio.isPresent()) {
+        if (optionalCurio.isEmpty()) {
           tooltip.addAll(attributeTooltip);
         }
       }

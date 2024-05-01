@@ -62,7 +62,6 @@ public class CuriosConfig {
   public static class Server {
 
     public ModConfigSpec.EnumValue<KeepCurios> keepCurios;
-    public ModConfigSpec.BooleanValue enableExperimentalMenu;
     public ModConfigSpec.IntValue minimumColumns;
     public ModConfigSpec.IntValue maxSlotsPerPage;
 
@@ -76,13 +75,6 @@ public class CuriosConfig {
 
       builder.push("menu");
 
-      enableExperimentalMenu =
-          builder.comment("Enables the experimental new Curios menu that replaces the default one.")
-              .translation(CONFIG_PREFIX + "enableExperimentalMenu")
-              .define("enableExperimentalMenu", false);
-
-      builder.push("experimental");
-
       minimumColumns = builder.comment("The minimum number of columns for the Curios menu.")
           .translation(CONFIG_PREFIX + "minimumColumns").defineInRange("minimumColumns", 1, 1, 8);
 
@@ -90,7 +82,6 @@ public class CuriosConfig {
           .translation(CONFIG_PREFIX + "maxSlotsPerPage")
           .defineInRange("maxSlotsPerPage", 48, 1, 48);
 
-      builder.pop();
       builder.pop();
       builder.build();
     }

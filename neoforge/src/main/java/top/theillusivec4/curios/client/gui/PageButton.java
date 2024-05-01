@@ -12,17 +12,17 @@ import top.theillusivec4.curios.CuriosConstants;
 import top.theillusivec4.curios.common.network.client.CPacketPage;
 
 public class PageButton extends Button {
-  private final CuriosScreenV2 parentGui;
+  private final CuriosScreen parentGui;
   private final Type type;
   private static final ResourceLocation CURIO_INVENTORY =
       new ResourceLocation(CuriosConstants.MOD_ID,
           "textures/gui/curios/inventory_revamp.png");
 
-  public PageButton(CuriosScreenV2 parentGui, int xIn, int yIn, int widthIn, int heightIn,
+  public PageButton(CuriosScreen parentGui, int xIn, int yIn, int widthIn, int heightIn,
                     Type type) {
     super(xIn, yIn, widthIn, heightIn, CommonComponents.EMPTY,
-        (button) -> PacketDistributor.SERVER.noArg()
-            .send(new CPacketPage(parentGui.getMenu().containerId, type == Type.NEXT)),
+        (button) -> PacketDistributor.sendToServer(
+            new CPacketPage(parentGui.getMenu().containerId, type == Type.NEXT)),
         DEFAULT_NARRATION);
     this.parentGui = parentGui;
     this.type = type;

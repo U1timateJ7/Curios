@@ -11,13 +11,13 @@ import java.util.stream.Stream;
 import net.minecraft.advancements.critereon.MinMaxBounds;
 import net.minecraft.util.ExtraCodecs;
 
-public record SlotPredicate(Optional<List<String>> slots, MinMaxBounds.Ints index) {
+public record SlotPredicate(List<String> slots, MinMaxBounds.Ints index) {
 
   public static final Codec<SlotPredicate> CODEC = RecordCodecBuilder.create(
       slotPredicateInstance -> slotPredicateInstance.group(
-              ExtraCodecs.strictOptionalField(Codec.STRING.listOf(), "slots")
+              Codec.STRING.listOf().optionalFieldOf("slots", List.of())
                   .forGetter(SlotPredicate::slots),
-              ExtraCodecs.strictOptionalField(MinMaxBounds.Ints.CODEC, "index", MinMaxBounds.Ints.ANY)
+              MinMaxBounds.Ints.CODEC.optionalFieldOf("index", MinMaxBounds.Ints.ANY)
                   .forGetter(SlotPredicate::index)
           )
           .apply(slotPredicateInstance, SlotPredicate::new)
@@ -25,7 +25,7 @@ public record SlotPredicate(Optional<List<String>> slots, MinMaxBounds.Ints inde
 
   public boolean matches(SlotContext slotContext) {
 
-    if (this.slots.map(sl -> !sl.contains(slotContext.identifier())).orElse(false)) {
+    if (!this.slots.contains(slotContext.identifier())) {
       return false;
     } else {
       return this.index.matches(slotContext.index());
@@ -40,22 +40,22 @@ public record SlotPredicate(Optional<List<String>> slots, MinMaxBounds.Ints inde
     private Builder() {
     }
 
-    public static SlotPredicate.Builder slot() {
-      return new SlotPredicate.Builder();
+    public static Builder slot() {
+      return new Builder();
     }
 
-    public SlotPredicate.Builder of(String... identifiers) {
+    public Builder of(String... identifiers) {
       this.identifiers = Stream.of(identifiers).collect(ImmutableSet.toImmutableSet());
       return this;
     }
 
-    public SlotPredicate.Builder withIndex(MinMaxBounds.Ints index) {
+    public Builder withIndex(MinMaxBounds.Ints index) {
       this.indices = index;
       return this;
     }
 
     public SlotPredicate build() {
-      return new SlotPredicate(Optional.of(this.identifiers.stream().toList()), this.indices);
+      return new SlotPredicate(this.identifiers.stream().toList(), this.indices);
     }
   }
 }

@@ -26,17 +26,20 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import javax.annotation.Nonnull;
+import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.loading.FMLLoader;
@@ -258,7 +261,7 @@ public final class CuriosApi {
    * @param stack       The ItemStack in question
    * @return A map of attribute modifiers
    */
-  public static Multimap<Attribute, AttributeModifier> getAttributeModifiers(
+  public static Multimap<Holder<Attribute>, AttributeModifier> getAttributeModifiers(
       SlotContext slotContext, UUID uuid, ItemStack stack) {
     apiError();
     return HashMultimap.create();
@@ -273,8 +276,8 @@ public final class CuriosApi {
    * @param amount     The amount of the modifier
    * @param operation  The operation of the modifier
    */
-  public static void addSlotModifier(Multimap<Attribute, AttributeModifier> map, String identifier,
-                                     UUID uuid, double amount,
+  public static void addSlotModifier(Multimap<Holder<Attribute>, AttributeModifier> map,
+                                     String identifier, UUID uuid, double amount,
                                      AttributeModifier.Operation operation) {
     apiError();
   }
@@ -285,7 +288,7 @@ public final class CuriosApi {
    * @param stack      The ItemStack to add the modifier to
    * @param identifier The identifier of the slot to add the modifier onto
    * @param name       The name for the modifier
-   * @param uuid       A UUID associated wth the modifier, or null if the slot UUID should be used
+   * @param uuid       A UUID associated wth the modifier
    * @param amount     The amount of the modifier
    * @param operation  The operation of the modifier
    * @param slot       The slot that the ItemStack provides the modifier from
@@ -294,6 +297,23 @@ public final class CuriosApi {
                                      double amount, AttributeModifier.Operation operation,
                                      String slot) {
     apiError();
+  }
+
+  /**
+   * Creates an {@link ItemAttributeModifiers} with an added slot modifier.
+   *
+   * @param itemAttributeModifiers A {@link ItemAttributeModifiers} instance
+   * @param identifier             The identifier of the slot to add the modifier onto
+   * @param uuid                   A UUID associated wth the modifier, or null if the slot UUID should be used
+   * @param amount                 The amount of the modifier
+   * @param operation              The operation of the modifier
+   * @param slotGroup              The slot to provide the modifier from
+   */
+  public static ItemAttributeModifiers withSlotModifier(
+      ItemAttributeModifiers itemAttributeModifiers, String identifier, UUID uuid, double amount,
+      AttributeModifier.Operation operation, EquipmentSlotGroup slotGroup) {
+    apiError();
+    return ItemAttributeModifiers.EMPTY;
   }
 
   /**
@@ -307,8 +327,8 @@ public final class CuriosApi {
    * @param operation The operation of the modifier
    * @param slot      The slot that the ItemStack provides the modifier from
    */
-  public static void addModifier(ItemStack stack, Attribute attribute, String name, UUID uuid,
-                                 double amount, AttributeModifier.Operation operation,
+  public static void addModifier(ItemStack stack, Holder<Attribute> attribute, String name,
+                                 UUID uuid, double amount, AttributeModifier.Operation operation,
                                  String slot) {
     apiError();
   }
@@ -374,11 +394,11 @@ public final class CuriosApi {
   }
 
   /**
-   * Performs breaking behavior used from the single-input consumer in {@link ItemStack#hurtAndBreak(int, LivingEntity, Consumer)}
+   * Performs breaking behavior used in the runnable through {@link ItemStack#hurtAndBreak(int, RandomSource, LivingEntity, Runnable)}}
    * <br>
    * This will be necessary in order to trigger break animations in curio slots
    * <br>
-   * Example: { stack.hurtAndBreak(amount, entity, damager -> CuriosApi.broadcastCurioBreakEvent(slotContext)); }
+   * Example: { stack.hurtAndBreak(amount, entity, () -> CuriosApi.broadcastCurioBreakEvent(slotContext)); }
    *
    * @param slotContext Context about the slot that the curio is in
    */

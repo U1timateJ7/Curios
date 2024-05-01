@@ -23,6 +23,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -32,6 +33,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
+import net.minecraft.core.Holder;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -47,6 +49,8 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeMap;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -60,26 +64,26 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.OnDatapackSyncEvent;
-import net.neoforged.neoforge.event.TickEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.living.EnderManAngerEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent;
-import net.neoforged.neoforge.event.entity.living.LivingEvent;
 import net.neoforged.neoforge.event.entity.living.LootingLevelEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerXpEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.network.PacketDistributor;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.SlotAttribute;
 import top.theillusivec4.curios.api.SlotContext;
+import top.theillusivec4.curios.api.event.CurioCanEquipEvent;
+import top.theillusivec4.curios.api.event.CurioCanUnequipEvent;
 import top.theillusivec4.curios.api.event.CurioChangeEvent;
 import top.theillusivec4.curios.api.event.CurioDropsEvent;
-import top.theillusivec4.curios.api.event.CurioEquipEvent;
-import top.theillusivec4.curios.api.event.CurioUnequipEvent;
 import top.theillusivec4.curios.api.event.DropRulesEvent;
 import top.theillusivec4.curios.api.type.ICuriosMenu;
 import top.theillusivec4.curios.api.type.ISlotType;
@@ -92,7 +96,7 @@ import top.theillusivec4.curios.common.CuriosConfig;
 import top.theillusivec4.curios.common.CuriosRegistry;
 import top.theillusivec4.curios.common.data.CuriosEntityManager;
 import top.theillusivec4.curios.common.data.CuriosSlotManager;
-import top.theillusivec4.curios.common.inventory.container.CuriosContainerV2;
+import top.theillusivec4.curios.common.inventory.container.CuriosContainer;
 import top.theillusivec4.curios.common.network.server.SPacketSetIcons;
 import top.theillusivec4.curios.common.network.server.sync.SPacketSyncCurios;
 import top.theillusivec4.curios.common.network.server.sync.SPacketSyncData;
@@ -186,11 +190,11 @@ public class CuriosEventHandler {
   public void playerLoggedIn(PlayerEvent.PlayerLoggedInEvent evt) {
     Player playerEntity = evt.getEntity();
 
-    if (playerEntity instanceof ServerPlayer) {
+    if (playerEntity instanceof ServerPlayer serverPlayer) {
       Collection<ISlotType> slotTypes = CuriosApi.getPlayerSlots(playerEntity).values();
       Map<String, ResourceLocation> icons = new HashMap<>();
       slotTypes.forEach(type -> icons.put(type.getIdentifier(), type.getIcon()));
-      PacketDistributor.PLAYER.with((ServerPlayer) playerEntity).send(new SPacketSetIcons(icons));
+      PacketDistributor.sendToPlayer(serverPlayer, new SPacketSetIcons(icons));
     }
   }
 
@@ -201,13 +205,13 @@ public class CuriosEventHandler {
       PlayerList playerList = evt.getPlayerList();
 
       for (ServerPlayer player : playerList.getPlayers()) {
-        PacketDistributor.PLAYER.with(player).send(
+        PacketDistributor.sendToPlayer(player,
             new SPacketSyncData(CuriosSlotManager.getSyncPacket(),
                 CuriosEntityManager.getSyncPacket()));
         CuriosApi.getCuriosInventory(player).ifPresent(handler -> {
           handler.readTag(handler.writeTag());
-          PacketDistributor.TRACKING_ENTITY_AND_SELF.with(player)
-              .send(new SPacketSyncCurios(player.getId(), handler.getCurios()));
+          PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
+              new SPacketSyncCurios(player.getId(), handler.getCurios()));
 
           if (player.containerMenu instanceof ICuriosMenu curiosContainer) {
             curiosContainer.resetSlots();
@@ -216,17 +220,17 @@ public class CuriosEventHandler {
         Collection<ISlotType> slotTypes = CuriosApi.getPlayerSlots(player).values();
         Map<String, ResourceLocation> icons = new HashMap<>();
         slotTypes.forEach(type -> icons.put(type.getIdentifier(), type.getIcon()));
-        PacketDistributor.PLAYER.with(player).send(new SPacketSetIcons(icons));
+        PacketDistributor.sendToPlayer(player, new SPacketSetIcons(icons));
       }
     } else {
       ServerPlayer mp = evt.getPlayer();
-      PacketDistributor.PLAYER.with(mp).send(new SPacketSyncData(CuriosSlotManager.getSyncPacket(),
+      PacketDistributor.sendToPlayer(mp, new SPacketSyncData(CuriosSlotManager.getSyncPacket(),
           CuriosEntityManager.getSyncPacket()));
       CuriosApi.getCuriosInventory(mp).ifPresent(
           handler -> {
             handler.readTag(handler.writeTag());
-            PacketDistributor.PLAYER.with(mp)
-                .send(new SPacketSyncCurios(mp.getId(), handler.getCurios()));
+            PacketDistributor.sendToPlayer(mp,
+                new SPacketSyncCurios(mp.getId(), handler.getCurios()));
 
             if (mp.containerMenu instanceof ICuriosMenu curiosContainer) {
               curiosContainer.resetSlots();
@@ -235,7 +239,7 @@ public class CuriosEventHandler {
       Collection<ISlotType> slotTypes = CuriosApi.getPlayerSlots(mp).values();
       Map<String, ResourceLocation> icons = new HashMap<>();
       slotTypes.forEach(type -> icons.put(type.getIdentifier(), type.getIcon()));
-      PacketDistributor.PLAYER.with(mp).send(new SPacketSetIcons(icons));
+      PacketDistributor.sendToPlayer(mp, new SPacketSetIcons(icons));
     }
   }
 
@@ -246,8 +250,7 @@ public class CuriosEventHandler {
     if (entity instanceof ServerPlayer serverPlayerEntity) {
       CuriosApi.getCuriosInventory(serverPlayerEntity).ifPresent(handler -> {
         ServerPlayer mp = (ServerPlayer) entity;
-        PacketDistributor.PLAYER.with(mp)
-            .send(new SPacketSyncCurios(mp.getId(), handler.getCurios()));
+        PacketDistributor.sendToPlayer(mp, new SPacketSyncCurios(mp.getId(), handler.getCurios()));
       });
     } else if (entity instanceof LivingEntity livingEntity) {
       CuriosApi.getCuriosInventory(livingEntity).ifPresent(inv -> inv.readTag(inv.writeTag()));
@@ -260,10 +263,10 @@ public class CuriosEventHandler {
     Entity target = evt.getTarget();
     Player player = evt.getEntity();
 
-    if (player instanceof ServerPlayer && target instanceof LivingEntity livingBase) {
+    if (player instanceof ServerPlayer serverPlayer && target instanceof LivingEntity livingBase) {
       CuriosApi.getCuriosInventory(livingBase).ifPresent(
-          handler -> PacketDistributor.PLAYER.with((ServerPlayer) player)
-              .send(new SPacketSyncCurios(target.getId(), handler.getCurios())));
+          handler -> PacketDistributor.sendToPlayer(serverPlayer,
+              new SPacketSyncCurios(target.getId(), handler.getCurios())));
     }
   }
 
@@ -357,7 +360,7 @@ public class CuriosEventHandler {
               NonNullList<Boolean> renderStates = entry.getValue().getRenders();
               SlotContext slotContext = new SlotContext(id, player, i, false,
                   renderStates.size() > i && renderStates.get(i));
-              CurioEquipEvent equipEvent = new CurioEquipEvent(stack, slotContext);
+              CurioCanEquipEvent equipEvent = new CurioCanEquipEvent(stack, slotContext);
               NeoForge.EVENT_BUS.post(equipEvent);
               Event.Result result = equipEvent.getEquipResult();
 
@@ -383,7 +386,8 @@ public class CuriosEventHandler {
                   evt.setCanceled(true);
                   return;
                 } else if (firstSlot == null) {
-                  CurioUnequipEvent unequipEvent = new CurioUnequipEvent(present, slotContext);
+                  CurioCanUnequipEvent unequipEvent =
+                      new CurioCanUnequipEvent(present, slotContext);
                   NeoForge.EVENT_BUS.post(unequipEvent);
                   result = unequipEvent.getUnequipResult();
 
@@ -416,10 +420,10 @@ public class CuriosEventHandler {
   }
 
   @SubscribeEvent
-  public void worldTick(TickEvent.LevelTickEvent evt) {
+  public void worldTick(LevelTickEvent.Post evt) {
 
-    if (evt.level instanceof ServerLevel && dirtyTags) {
-      PlayerList list = ((ServerLevel) evt.level).getServer().getPlayerList();
+    if (evt.getLevel() instanceof ServerLevel && dirtyTags) {
+      PlayerList list = ((ServerLevel) evt.getLevel()).getServer().getPlayerList();
 
       for (ServerPlayer player : list.getPlayers()) {
         CuriosApi.getCuriosInventory(player).ifPresent(handler -> {
@@ -484,7 +488,7 @@ public class CuriosEventHandler {
       }
     });
     ItemStack stack = player.getMainHandItem();
-    int bonusLevel = stack.getEnchantmentLevel(Enchantments.BLOCK_FORTUNE);
+    int bonusLevel = stack.getEnchantmentLevel(Enchantments.FORTUNE);
     int silklevel = stack.getEnchantmentLevel(Enchantments.SILK_TOUCH);
     LevelAccessor level = evt.getLevel();
     evt.setExpToDrop(evt.getState()
@@ -520,124 +524,140 @@ public class CuriosEventHandler {
   }
 
   @SubscribeEvent
-  public void tick(LivingEvent.LivingTickEvent evt) {
-    LivingEntity livingEntity = evt.getEntity();
+  public void tick(EntityTickEvent.Post evt) {
+    Entity entity = evt.getEntity();
 
-    if (livingEntity instanceof Player player &&
-        player.containerMenu instanceof CuriosContainerV2 curiosContainer) {
-      curiosContainer.checkQuickMove();
-    }
+    if (entity instanceof LivingEntity livingEntity) {
+      if (livingEntity instanceof Player player &&
+          player.containerMenu instanceof CuriosContainer curiosContainer) {
+        curiosContainer.checkQuickMove();
+      }
 
-    CuriosApi.getCuriosInventory(livingEntity).ifPresent(handler -> {
-      handler.clearCachedSlotModifiers();
-      handler.handleInvalidStacks();
-      Map<String, ICurioStacksHandler> curios = handler.getCurios();
+      CuriosApi.getCuriosInventory(livingEntity).ifPresent(handler -> {
+        handler.clearCachedSlotModifiers();
+        handler.handleInvalidStacks();
+        Map<String, ICurioStacksHandler> curios = handler.getCurios();
 
-      for (Map.Entry<String, ICurioStacksHandler> entry : curios.entrySet()) {
-        ICurioStacksHandler stacksHandler = entry.getValue();
-        String identifier = entry.getKey();
-        IDynamicStackHandler stackHandler = stacksHandler.getStacks();
-        IDynamicStackHandler cosmeticStackHandler = stacksHandler.getCosmeticStacks();
+        for (Map.Entry<String, ICurioStacksHandler> entry : curios.entrySet()) {
+          ICurioStacksHandler stacksHandler = entry.getValue();
+          String identifier = entry.getKey();
+          IDynamicStackHandler stackHandler = stacksHandler.getStacks();
+          IDynamicStackHandler cosmeticStackHandler = stacksHandler.getCosmeticStacks();
 
-        for (int i = 0; i < stacksHandler.getSlots(); i++) {
-          NonNullList<Boolean> renderStates = stacksHandler.getRenders();
-          SlotContext slotContext = new SlotContext(identifier, livingEntity, i, false,
-              renderStates.size() > i && renderStates.get(i));
-          ItemStack stack = stackHandler.getStackInSlot(i);
-          Optional<ICurio> currentCurio = CuriosApi.getCurio(stack);
-          final int index = i;
+          for (int i = 0; i < stacksHandler.getSlots(); i++) {
+            NonNullList<Boolean> renderStates = stacksHandler.getRenders();
+            SlotContext slotContext = new SlotContext(identifier, livingEntity, i, false,
+                renderStates.size() > i && renderStates.get(i));
+            ItemStack stack = stackHandler.getStackInSlot(i);
+            Optional<ICurio> currentCurio = CuriosApi.getCurio(stack);
+            final int index = i;
 
-          if (!stack.isEmpty()) {
-            stack.inventoryTick(livingEntity.level(), livingEntity, -1, false);
-            currentCurio.ifPresent(curio -> curio.curioTick(slotContext));
+            if (!stack.isEmpty()) {
+              stack.inventoryTick(livingEntity.level(), livingEntity, -1, false);
+              currentCurio.ifPresent(curio -> curio.curioTick(slotContext));
 
-            if (livingEntity.level().isClientSide) {
-              currentCurio.ifPresent(curio -> curio.curioAnimate(identifier, index, livingEntity));
+              if (livingEntity.level().isClientSide) {
+                currentCurio.ifPresent(
+                    curio -> curio.curioAnimate(identifier, index, livingEntity));
+              }
             }
-          }
 
-          if (!livingEntity.level().isClientSide) {
-            ItemStack prevStack = stackHandler.getPreviousStackInSlot(i);
+            if (!livingEntity.level().isClientSide) {
+              ItemStack prevStack = stackHandler.getPreviousStackInSlot(i);
 
-            if (!ItemStack.matches(stack, prevStack)) {
-              Optional<ICurio> prevCurio = CuriosApi.getCurio(prevStack);
-              syncCurios(livingEntity, stack, currentCurio, prevCurio, identifier, index, false,
-                  renderStates.size() > index && renderStates.get(index), HandlerType.EQUIPMENT);
-              NeoForge.EVENT_BUS
-                  .post(new CurioChangeEvent(livingEntity, identifier, i, prevStack, stack));
-              UUID uuid = CuriosApi.getSlotUuid(slotContext);
+              if (!ItemStack.matches(stack, prevStack)) {
+                Optional<ICurio> prevCurio = CuriosApi.getCurio(prevStack);
+                syncCurios(livingEntity, stack, currentCurio, prevCurio, identifier, index, false,
+                    renderStates.size() > index && renderStates.get(index), HandlerType.EQUIPMENT);
+                NeoForge.EVENT_BUS
+                    .post(new CurioChangeEvent(livingEntity, identifier, i, prevStack, stack));
+                UUID uuid = CuriosApi.getSlotUuid(slotContext);
+                AttributeMap attributeMap = livingEntity.getAttributes();
 
-              if (!prevStack.isEmpty()) {
-                Multimap<Attribute, AttributeModifier> map =
-                    CuriosApi.getAttributeModifiers(slotContext, uuid, prevStack);
-                Multimap<String, AttributeModifier> slots = HashMultimap.create();
-                Set<SlotAttribute> toRemove = new HashSet<>();
+                if (!prevStack.isEmpty()) {
+                  Multimap<Holder<Attribute>, AttributeModifier> map =
+                      CuriosApi.getAttributeModifiers(slotContext, uuid, prevStack);
+                  Multimap<String, AttributeModifier> slots = HashMultimap.create();
+                  Set<Holder<Attribute>> toRemove = new HashSet<>();
 
-                for (Attribute attribute : map.keySet()) {
+                  for (Holder<Attribute> attribute : map.keySet()) {
 
-                  if (attribute instanceof SlotAttribute wrapper) {
-                    slots.putAll(wrapper.getIdentifier(), map.get(attribute));
-                    toRemove.add(wrapper);
+                    if (attribute.value() instanceof SlotAttribute wrapper) {
+                      slots.putAll(wrapper.getIdentifier(), map.get(attribute));
+                      toRemove.add(attribute);
+                    }
+                  }
+
+                  for (Holder<Attribute> attribute : toRemove) {
+                    map.removeAll(attribute);
+                  }
+                  map.forEach((key, value) -> {
+                    AttributeInstance attInst = attributeMap.getInstance(key);
+
+                    if (attInst != null) {
+                      attInst.removeModifier(value);
+                    }
+                  });
+                  handler.removeSlotModifiers(slots);
+                  prevCurio.ifPresent(curio -> curio.onUnequip(slotContext, stack));
+                }
+
+                if (!stack.isEmpty()) {
+                  Multimap<Holder<Attribute>, AttributeModifier> map =
+                      CuriosApi.getAttributeModifiers(slotContext, uuid, stack);
+                  Multimap<String, AttributeModifier> slots = HashMultimap.create();
+                  Set<Holder<Attribute>> toRemove = new HashSet<>();
+
+                  for (Holder<Attribute> attribute : map.keySet()) {
+
+                    if (attribute instanceof SlotAttribute wrapper) {
+                      slots.putAll(wrapper.getIdentifier(), map.get(attribute));
+                      toRemove.add(attribute);
+                    }
+                  }
+
+                  for (Holder<Attribute> attribute : toRemove) {
+                    map.removeAll(attribute);
+                  }
+                  map.forEach((key, value) -> {
+                    AttributeInstance attInst = attributeMap.getInstance(key);
+
+                    if (attInst != null) {
+                      attInst.addTransientModifier(value);
+                    }
+                  });
+                  handler.addTransientSlotModifiers(slots);
+                  currentCurio.ifPresent(curio -> curio.onEquip(slotContext, prevStack));
+
+                  if (livingEntity instanceof ServerPlayer) {
+                    CuriosRegistry.EQUIP_TRIGGER.get()
+                        .trigger(slotContext, (ServerPlayer) livingEntity, stack);
                   }
                 }
-
-                for (Attribute attribute : toRemove) {
-                  map.removeAll(attribute);
-                }
-                livingEntity.getAttributes().removeAttributeModifiers(map);
-                handler.removeSlotModifiers(slots);
-                prevCurio.ifPresent(curio -> curio.onUnequip(slotContext, stack));
+                stackHandler.setPreviousStackInSlot(i, stack.copy());
               }
+              ItemStack cosmeticStack = cosmeticStackHandler.getStackInSlot(i);
+              ItemStack prevCosmeticStack = cosmeticStackHandler.getPreviousStackInSlot(i);
 
-              if (!stack.isEmpty()) {
-                Multimap<Attribute, AttributeModifier> map =
-                    CuriosApi.getAttributeModifiers(slotContext, uuid, stack);
-                Multimap<String, AttributeModifier> slots = HashMultimap.create();
-                Set<SlotAttribute> toRemove = new HashSet<>();
-
-                for (Attribute attribute : map.keySet()) {
-
-                  if (attribute instanceof SlotAttribute wrapper) {
-                    slots.putAll(wrapper.getIdentifier(), map.get(attribute));
-                    toRemove.add(wrapper);
-                  }
-                }
-
-                for (Attribute attribute : toRemove) {
-                  map.removeAll(attribute);
-                }
-                livingEntity.getAttributes().addTransientAttributeModifiers(map);
-                handler.addTransientSlotModifiers(slots);
-                currentCurio.ifPresent(curio -> curio.onEquip(slotContext, prevStack));
-
-                if (livingEntity instanceof ServerPlayer) {
-                  CuriosRegistry.EQUIP_TRIGGER.get()
-                      .trigger(slotContext, (ServerPlayer) livingEntity, stack);
-                }
+              if (!ItemStack.matches(cosmeticStack, prevCosmeticStack)) {
+                syncCurios(livingEntity, cosmeticStack,
+                    CuriosApi.getCurio(cosmeticStack),
+                    CuriosApi.getCurio(prevCosmeticStack), identifier, index, true,
+                    true, HandlerType.COSMETIC);
+                cosmeticStackHandler.setPreviousStackInSlot(index, cosmeticStack.copy());
               }
-              stackHandler.setPreviousStackInSlot(i, stack.copy());
-            }
-            ItemStack cosmeticStack = cosmeticStackHandler.getStackInSlot(i);
-            ItemStack prevCosmeticStack = cosmeticStackHandler.getPreviousStackInSlot(i);
+              Set<ICurioStacksHandler> updates = handler.getUpdatingInventories();
 
-            if (!ItemStack.matches(cosmeticStack, prevCosmeticStack)) {
-              syncCurios(livingEntity, cosmeticStack,
-                  CuriosApi.getCurio(cosmeticStack),
-                  CuriosApi.getCurio(prevCosmeticStack), identifier, index, true,
-                  true, HandlerType.COSMETIC);
-              cosmeticStackHandler.setPreviousStackInSlot(index, cosmeticStack.copy());
-            }
-            Set<ICurioStacksHandler> updates = handler.getUpdatingInventories();
-
-            if (!updates.isEmpty()) {
-              PacketDistributor.TRACKING_ENTITY_AND_SELF.with(livingEntity)
-                  .send(new SPacketSyncModifiers(livingEntity.getId(), updates));
-              updates.clear();
+              if (!updates.isEmpty()) {
+                PacketDistributor.sendToPlayersTrackingEntityAndSelf(livingEntity,
+                    new SPacketSyncModifiers(livingEntity.getId(), updates));
+                updates.clear();
+              }
             }
           }
         }
-      }
-    });
+      });
+    }
   }
 
   @SubscribeEvent
@@ -648,28 +668,22 @@ public class CuriosEventHandler {
       EquipmentSlot slot = evt.getSlot();
 
       if (!from.isEmpty()) {
-        Multimap<Attribute, AttributeModifier> map = from.getAttributeModifiers(slot);
         Multimap<String, AttributeModifier> slots = HashMultimap.create();
-
-        for (Attribute attribute : map.keySet()) {
-
-          if (attribute instanceof SlotAttribute wrapper) {
-            slots.putAll(wrapper.getIdentifier(), map.get(attribute));
+        from.forEachModifier(slot, (att, modifier) -> {
+          if (att.value() instanceof SlotAttribute wrapper) {
+            slots.putAll(wrapper.getIdentifier(), Collections.singleton(modifier));
           }
-        }
+        });
         inv.removeSlotModifiers(slots);
       }
 
       if (!to.isEmpty()) {
-        Multimap<Attribute, AttributeModifier> map = to.getAttributeModifiers(slot);
         Multimap<String, AttributeModifier> slots = HashMultimap.create();
-
-        for (Attribute attribute : map.keySet()) {
-
-          if (attribute instanceof SlotAttribute wrapper) {
-            slots.putAll(wrapper.getIdentifier(), map.get(attribute));
+        to.forEachModifier(slot, (att, modifier) -> {
+          if (att.value() instanceof SlotAttribute wrapper) {
+            slots.putAll(wrapper.getIdentifier(), Collections.singleton(modifier));
           }
-        }
+        });
         inv.addTransientSlotModifiers(slots);
       }
     });
@@ -686,7 +700,7 @@ public class CuriosEventHandler {
       CompoundTag tag = curio.writeSyncData(slotContext);
       return tag != null ? tag : new CompoundTag();
     }).orElse(new CompoundTag()) : new CompoundTag();
-    PacketDistributor.TRACKING_ENTITY_AND_SELF.with(livingEntity).send(
+    PacketDistributor.sendToPlayersTrackingEntityAndSelf(livingEntity,
         new SPacketSyncStack(livingEntity.getId(), identifier, index, stack, type.ordinal(),
             syncTag));
   }

@@ -30,12 +30,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import net.minecraft.core.Holder;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeMap;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -165,13 +168,14 @@ public class CurioStacksHandler implements ICurioStacksHandler {
 
   private void addLegacyChange(int shift) {
     AttributeModifier mod = this.getModifiers().get(LEGACY_UUID);
-    int current = mod != null ? (int) mod.getAmount() : 0;
+    int current = mod != null ? (int) mod.amount() : 0;
     current += shift;
     AttributeModifier newModifier =
-        new AttributeModifier(LEGACY_UUID, "legacy", current, AttributeModifier.Operation.ADDITION);
-    this.modifiers.put(newModifier.getId(), newModifier);
+        new AttributeModifier(LEGACY_UUID, "legacy", current,
+            AttributeModifier.Operation.ADD_VALUE);
+    this.modifiers.put(newModifier.id(), newModifier);
     Collection<AttributeModifier> modifiers =
-        this.getModifiersByOperation(newModifier.getOperation());
+        this.getModifiersByOperation(newModifier.operation());
     modifiers.remove(newModifier);
     modifiers.add(newModifier);
     this.persistentModifiers.remove(newModifier);
@@ -183,8 +187,10 @@ public class CurioStacksHandler implements ICurioStacksHandler {
   public CompoundTag serializeNBT() {
     CompoundTag compoundNBT = new CompoundTag();
     compoundNBT.putInt("SavedBaseSize", this.baseSize);
-    compoundNBT.put("Stacks", this.stackHandler.serializeNBT());
-    compoundNBT.put("Cosmetics", this.cosmeticStackHandler.serializeNBT());
+    compoundNBT.put("Stacks",
+        this.stackHandler.serializeNBT(this.itemHandler.getWearer().registryAccess()));
+    compoundNBT.put("Cosmetics",
+        this.cosmeticStackHandler.serializeNBT(this.itemHandler.getWearer().registryAccess()));
 
     ListTag nbtTagList = new ListTag();
 
@@ -232,11 +238,13 @@ public class CurioStacksHandler implements ICurioStacksHandler {
     }
 
     if (nbt.contains("Stacks")) {
-      this.stackHandler.deserializeNBT(nbt.getCompound("Stacks"));
+      this.stackHandler.deserializeNBT(this.itemHandler.getWearer().registryAccess(),
+          nbt.getCompound("Stacks"));
     }
 
     if (nbt.contains("Cosmetics")) {
-      this.cosmeticStackHandler.deserializeNBT(nbt.getCompound("Cosmetics"));
+      this.cosmeticStackHandler.deserializeNBT(this.itemHandler.getWearer().registryAccess(),
+          nbt.getCompound("Cosmetics"));
     }
 
     if (nbt.contains("Renders")) {
@@ -307,8 +315,10 @@ public class CurioStacksHandler implements ICurioStacksHandler {
 
   public CompoundTag getSyncTag() {
     CompoundTag compoundNBT = new CompoundTag();
-    compoundNBT.put("Stacks", this.stackHandler.serializeNBT());
-    compoundNBT.put("Cosmetics", this.cosmeticStackHandler.serializeNBT());
+    compoundNBT.put("Stacks",
+        this.stackHandler.serializeNBT(this.itemHandler.getWearer().registryAccess()));
+    compoundNBT.put("Cosmetics",
+        this.cosmeticStackHandler.serializeNBT(this.itemHandler.getWearer().registryAccess()));
 
     ListTag nbtTagList = new ListTag();
 
@@ -346,11 +356,13 @@ public class CurioStacksHandler implements ICurioStacksHandler {
     }
 
     if (tag.contains("Stacks")) {
-      this.stackHandler.deserializeNBT(tag.getCompound("Stacks"));
+      this.stackHandler.deserializeNBT(this.itemHandler.getWearer().registryAccess(),
+          tag.getCompound("Stacks"));
     }
 
     if (tag.contains("Cosmetics")) {
-      this.cosmeticStackHandler.deserializeNBT(tag.getCompound("Cosmetics"));
+      this.cosmeticStackHandler.deserializeNBT(this.itemHandler.getWearer().registryAccess(),
+          tag.getCompound("Cosmetics"));
     }
 
     if (tag.contains("Renders")) {
@@ -440,8 +452,8 @@ public class CurioStacksHandler implements ICurioStacksHandler {
   }
 
   public void addTransientModifier(AttributeModifier modifier) {
-    this.modifiers.put(modifier.getId(), modifier);
-    this.getModifiersByOperation(modifier.getOperation()).add(modifier);
+    this.modifiers.put(modifier.id(), modifier);
+    this.getModifiersByOperation(modifier.operation()).add(modifier);
     this.flagUpdate();
   }
 
@@ -455,7 +467,7 @@ public class CurioStacksHandler implements ICurioStacksHandler {
 
     if (modifier != null) {
       this.persistentModifiers.remove(modifier);
-      this.getModifiersByOperation(modifier.getOperation()).remove(modifier);
+      this.getModifiersByOperation(modifier.operation()).remove(modifier);
       this.flagUpdate();
     }
   }
@@ -480,7 +492,7 @@ public class CurioStacksHandler implements ICurioStacksHandler {
   public void clearCachedModifiers() {
 
     for (AttributeModifier cachedModifier : this.cachedModifiers) {
-      this.removeModifier(cachedModifier.getId());
+      this.removeModifier(cachedModifier.id());
     }
     this.cachedModifiers.clear();
     this.flagUpdate();
@@ -493,19 +505,19 @@ public class CurioStacksHandler implements ICurioStacksHandler {
       double baseSize = this.baseSize;
 
       for (AttributeModifier mod : this.getModifiersByOperation(
-          AttributeModifier.Operation.ADDITION)) {
-        baseSize += mod.getAmount();
+          AttributeModifier.Operation.ADD_VALUE)) {
+        baseSize += mod.amount();
       }
       double size = baseSize;
 
       for (AttributeModifier mod : this.getModifiersByOperation(
-          AttributeModifier.Operation.MULTIPLY_BASE)) {
-        size += this.baseSize * mod.getAmount();
+          AttributeModifier.Operation.ADD_MULTIPLIED_BASE)) {
+        size += this.baseSize * mod.amount();
       }
 
       for (AttributeModifier mod : this.getModifiersByOperation(
-          AttributeModifier.Operation.MULTIPLY_TOTAL)) {
-        size *= mod.getAmount();
+          AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)) {
+        size *= mod.amount();
       }
 
       if (size != this.getSlots()) {
@@ -570,23 +582,31 @@ public class CurioStacksHandler implements ICurioStacksHandler {
 
       if (!stack.isEmpty()) {
         UUID uuid = CuriosApi.getSlotUuid(slotContext);
-        Multimap<Attribute, AttributeModifier> map =
+        Multimap<Holder<Attribute>, AttributeModifier> map =
             CuriosApi.getAttributeModifiers(slotContext, uuid, stack);
         Multimap<String, AttributeModifier> slots = HashMultimap.create();
-        Set<SlotAttribute> toRemove = new HashSet<>();
+        Set<Holder<Attribute>> toRemove = new HashSet<>();
+        AttributeMap attributeMap = entity.getAttributes();
 
-        for (Attribute attribute : map.keySet()) {
+        for (Holder<Attribute> attribute : map.keySet()) {
 
-          if (attribute instanceof SlotAttribute wrapper) {
+          if (attribute.value() instanceof SlotAttribute wrapper) {
             slots.putAll(wrapper.getIdentifier(), map.get(attribute));
-            toRemove.add(wrapper);
+            toRemove.add(attribute);
           }
         }
 
-        for (Attribute attribute : toRemove) {
+        for (Holder<Attribute> attribute : toRemove) {
           map.removeAll(attribute);
         }
-        this.itemHandler.getWearer().getAttributes().removeAttributeModifiers(map);
+
+        map.forEach((key, value) -> {
+          AttributeInstance attInst = attributeMap.getInstance(key);
+
+          if (attInst != null) {
+            attInst.removeModifier(value);
+          }
+        });
         this.itemHandler.removeSlotModifiers(slots);
         CuriosApi.getCurio(stack).ifPresent(curio -> curio.onUnequip(slotContext, ItemStack.EMPTY));
       }

@@ -26,7 +26,7 @@ import net.minecraft.world.item.ItemStack;
 public class CrownItem extends Item {
 
   public CrownItem() {
-    super(new Item.Properties().stacksTo(1).defaultDurability(2000));
+    super(new Item.Properties().stacksTo(1).durability(2000));
   }
 
   @Override

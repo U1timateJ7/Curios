@@ -19,13 +19,13 @@
 
 package top.theillusivec4.curiostest;
 
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nonnull;
+import net.minecraft.core.Holder;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
@@ -82,7 +82,7 @@ public class CuriosTest {
   public static final Logger LOGGER = LogManager.getLogger();
 
   public CuriosTest(IEventBus eventBus) {
-    CuriosTestRegistry.init();
+    CuriosTestRegistry.init(eventBus);
     eventBus.addListener(this::enqueue);
     eventBus.addListener(this::clientSetup);
     eventBus.addListener(this::registerLayers);
@@ -121,8 +121,8 @@ public class CuriosTest {
         if (!livingEntity.level().isClientSide() && livingEntity.tickCount % 20 == 0) {
           livingEntity
               .addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 300, -1, true, true));
-          stack.hurtAndBreak(1, livingEntity,
-              damager -> CuriosApi.broadcastCurioBreakEvent(slotContext));
+          stack.hurtAndBreak(1, livingEntity.getRandom(), livingEntity,
+              () -> CuriosApi.broadcastCurioBreakEvent(slotContext));
         }
       }
     }, CuriosTestRegistry.CROWN.get());
@@ -144,19 +144,20 @@ public class CuriosTest {
       }
 
       @Override
-      public Multimap<Attribute, AttributeModifier> getAttributeModifiers(SlotContext slotContext,
-                                                                          UUID uuid) {
-        Multimap<Attribute, AttributeModifier> atts = LinkedHashMultimap.create();
+      public Multimap<Holder<Attribute>, AttributeModifier> getAttributeModifiers(
+          SlotContext slotContext,
+          UUID uuid) {
+        Multimap<Holder<Attribute>, AttributeModifier> atts = LinkedHashMultimap.create();
         atts.put(Attributes.MOVEMENT_SPEED,
             new AttributeModifier(uuid, CuriosTest.MODID + ":speed_bonus", 0.1,
-                AttributeModifier.Operation.MULTIPLY_TOTAL));
+                AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
         atts.put(Attributes.ARMOR,
             new AttributeModifier(uuid, CuriosTest.MODID + ":armor_bonus", 2,
-                AttributeModifier.Operation.ADDITION));
+                AttributeModifier.Operation.ADD_VALUE));
         atts.put(Attributes.KNOCKBACK_RESISTANCE,
             new AttributeModifier(uuid, CuriosTest.MODID + ":knockback_resist", 0.2,
-                AttributeModifier.Operation.ADDITION));
-        CuriosApi.addSlotModifier(atts, "ring", uuid, 1, AttributeModifier.Operation.ADDITION);
+                AttributeModifier.Operation.ADD_VALUE));
+        CuriosApi.addSlotModifier(atts, "ring", uuid, 1, AttributeModifier.Operation.ADD_VALUE);
 //        CuriosApi.addSlotModifier(atts, "curio", uuid, -1, AttributeModifier.Operation.ADDITION);
         return atts;
       }
@@ -171,7 +172,7 @@ public class CuriosTest {
       @Nonnull
       @Override
       public SoundInfo getEquipSound(SlotContext slotContext) {
-        return new SoundInfo(SoundEvents.ARMOR_EQUIP_GOLD, 1.0f, 1.0f);
+        return new SoundInfo(SoundEvents.ARMOR_EQUIP_GOLD.value(), 1.0f, 1.0f);
       }
 
       @Override
@@ -203,14 +204,15 @@ public class CuriosTest {
       }
 
       @Override
-      public Multimap<Attribute, AttributeModifier> getAttributeModifiers(SlotContext slotContext,
-                                                                          UUID uuid) {
-        Multimap<Attribute, AttributeModifier> atts = LinkedHashMultimap.create();
+      public Multimap<Holder<Attribute>, AttributeModifier> getAttributeModifiers(
+          SlotContext slotContext,
+          UUID uuid) {
+        Multimap<Holder<Attribute>, AttributeModifier> atts = LinkedHashMultimap.create();
         atts.put(Attributes.ATTACK_DAMAGE,
             new AttributeModifier(uuid, CuriosTest.MODID + ":attack_damage_bonus", 4,
-                AttributeModifier.Operation.ADDITION));
-        CuriosApi.addSlotModifier(atts, "necklace", uuid, 2, AttributeModifier.Operation.ADDITION);
-        CuriosApi.addSlotModifier(atts, "ring", uuid, -1, AttributeModifier.Operation.ADDITION);
+                AttributeModifier.Operation.ADD_VALUE));
+        CuriosApi.addSlotModifier(atts, "necklace", uuid, 2, AttributeModifier.Operation.ADD_VALUE);
+        CuriosApi.addSlotModifier(atts, "ring", uuid, -1, AttributeModifier.Operation.ADD_VALUE);
         return atts;
       }
     }, CuriosTestRegistry.KNUCKLES.get());
@@ -221,9 +223,10 @@ public class CuriosTest {
     if (evt.getSlotContext().identifier().equals("curio")) {
       evt.clearModifiers();
       evt.addModifier(Attributes.MAX_HEALTH, new AttributeModifier(evt.getUuid(), "test", 10.0d,
-          AttributeModifier.Operation.ADDITION));
+          AttributeModifier.Operation.ADD_VALUE));
       evt.addModifier(SlotAttribute.getOrCreate("ring"),
-          new AttributeModifier(evt.getUuid(), "test", 1.0d, AttributeModifier.Operation.ADDITION));
+          new AttributeModifier(evt.getUuid(), "test", 1.0d,
+              AttributeModifier.Operation.ADD_VALUE));
     }
   }
 

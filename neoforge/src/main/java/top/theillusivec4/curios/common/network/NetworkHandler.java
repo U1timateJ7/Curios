@@ -19,12 +19,11 @@
 
 package top.theillusivec4.curios.common.network;
 
-import net.neoforged.neoforge.network.registration.IPayloadRegistrar;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import top.theillusivec4.curios.common.network.client.CPacketDestroy;
 import top.theillusivec4.curios.common.network.client.CPacketOpenCurios;
 import top.theillusivec4.curios.common.network.client.CPacketOpenVanilla;
 import top.theillusivec4.curios.common.network.client.CPacketPage;
-import top.theillusivec4.curios.common.network.client.CPacketScroll;
 import top.theillusivec4.curios.common.network.client.CPacketToggleCosmetics;
 import top.theillusivec4.curios.common.network.client.CPacketToggleRender;
 import top.theillusivec4.curios.common.network.client.CuriosClientPayloadHandler;
@@ -33,7 +32,6 @@ import top.theillusivec4.curios.common.network.server.SPacketBreak;
 import top.theillusivec4.curios.common.network.server.SPacketGrabbedItem;
 import top.theillusivec4.curios.common.network.server.SPacketPage;
 import top.theillusivec4.curios.common.network.server.SPacketQuickMove;
-import top.theillusivec4.curios.common.network.server.SPacketScroll;
 import top.theillusivec4.curios.common.network.server.SPacketSetIcons;
 import top.theillusivec4.curios.common.network.server.sync.SPacketSyncCurios;
 import top.theillusivec4.curios.common.network.server.sync.SPacketSyncData;
@@ -43,45 +41,41 @@ import top.theillusivec4.curios.common.network.server.sync.SPacketSyncStack;
 
 public class NetworkHandler {
 
-  public static void register(final IPayloadRegistrar registrar) {
+  public static void register(final PayloadRegistrar registrar) {
     //Client Packets
-    registrar.play(CPacketDestroy.ID, CPacketDestroy::new,
-        handler -> handler.server(CuriosServerPayloadHandler.getInstance()::handleDestroyPacket));
-    registrar.play(CPacketOpenCurios.ID, CPacketOpenCurios::new,
-        handler -> handler.server(CuriosServerPayloadHandler.getInstance()::handleOpenCurios));
-    registrar.play(CPacketOpenVanilla.ID, CPacketOpenVanilla::new,
-        handler -> handler.server(CuriosServerPayloadHandler.getInstance()::handleOpenVanilla));
-    registrar.play(CPacketScroll.ID, CPacketScroll::new,
-        handler -> handler.server(CuriosServerPayloadHandler.getInstance()::handleScroll));
-    registrar.play(CPacketPage.ID, CPacketPage::new,
-        handler -> handler.server(CuriosServerPayloadHandler.getInstance()::handlePage));
-    registrar.play(CPacketToggleRender.ID, CPacketToggleRender::new,
-        handler -> handler.server(CuriosServerPayloadHandler.getInstance()::handlerToggleRender));
-    registrar.play(CPacketToggleCosmetics.ID, CPacketToggleCosmetics::new,
-        handler -> handler.server(CuriosServerPayloadHandler.getInstance()::handlerToggleCosmetics));
+    registrar.playToServer(CPacketDestroy.TYPE, CPacketDestroy.STREAM_CODEC,
+        CuriosServerPayloadHandler.getInstance()::handleDestroyPacket);
+    registrar.playToServer(CPacketOpenCurios.TYPE, CPacketOpenCurios.STREAM_CODEC,
+        CuriosServerPayloadHandler.getInstance()::handleOpenCurios);
+    registrar.playToServer(CPacketOpenVanilla.TYPE, CPacketOpenVanilla.STREAM_CODEC,
+        CuriosServerPayloadHandler.getInstance()::handleOpenVanilla);
+    registrar.playToServer(CPacketPage.TYPE, CPacketPage.STREAM_CODEC,
+        CuriosServerPayloadHandler.getInstance()::handlePage);
+    registrar.playToServer(CPacketToggleRender.TYPE, CPacketToggleRender.STREAM_CODEC,
+        CuriosServerPayloadHandler.getInstance()::handlerToggleRender);
+    registrar.playToServer(CPacketToggleCosmetics.TYPE, CPacketToggleCosmetics.STREAM_CODEC,
+        CuriosServerPayloadHandler.getInstance()::handlerToggleCosmetics);
 
     // Server Packets
-    registrar.play(SPacketSyncStack.ID, SPacketSyncStack::new,
-        handler -> handler.client(CuriosClientPayloadHandler.getInstance()::handleSyncStack));
-    registrar.play(SPacketGrabbedItem.ID, SPacketGrabbedItem::new,
-        handler -> handler.client(CuriosClientPayloadHandler.getInstance()::handleGrabbedItem));
-    registrar.play(SPacketSyncCurios.ID, SPacketSyncCurios::new,
-        handler -> handler.client(CuriosClientPayloadHandler.getInstance()::handleSyncCurios));
-    registrar.play(SPacketSyncData.ID, SPacketSyncData::new,
-        handler -> handler.client(CuriosClientPayloadHandler.getInstance()::handleSyncData));
-    registrar.play(SPacketSyncModifiers.ID, SPacketSyncModifiers::new,
-        handler -> handler.client(CuriosClientPayloadHandler.getInstance()::handleSyncModifiers));
-    registrar.play(SPacketSyncRender.ID, SPacketSyncRender::new,
-        handler -> handler.client(CuriosClientPayloadHandler.getInstance()::handleSyncRender));
-    registrar.play(SPacketBreak.ID, SPacketBreak::new,
-        handler -> handler.client(CuriosClientPayloadHandler.getInstance()::handleBreak));
-    registrar.play(SPacketScroll.ID, SPacketScroll::new,
-        handler -> handler.client(CuriosClientPayloadHandler.getInstance()::handleScroll));
-    registrar.play(SPacketPage.ID, SPacketPage::new,
-        handler -> handler.client(CuriosClientPayloadHandler.getInstance()::handlePage));
-    registrar.play(SPacketSetIcons.ID, SPacketSetIcons::new,
-        handler -> handler.client(CuriosClientPayloadHandler.getInstance()::handleSetIcons));
-    registrar.play(SPacketQuickMove.ID, SPacketQuickMove::new,
-        handler -> handler.client(CuriosClientPayloadHandler.getInstance()::handleQuickMove));
+    registrar.playToClient(SPacketSyncStack.TYPE, SPacketSyncStack.STREAM_CODEC,
+        CuriosClientPayloadHandler.getInstance()::handleSyncStack);
+    registrar.playToClient(SPacketGrabbedItem.TYPE, SPacketGrabbedItem.STREAM_CODEC,
+        CuriosClientPayloadHandler.getInstance()::handleGrabbedItem);
+    registrar.playToClient(SPacketSyncCurios.TYPE, SPacketSyncCurios.STREAM_CODEC,
+        CuriosClientPayloadHandler.getInstance()::handleSyncCurios);
+    registrar.playToClient(SPacketSyncData.TYPE, SPacketSyncData.STREAM_CODEC,
+        CuriosClientPayloadHandler.getInstance()::handleSyncData);
+    registrar.playToClient(SPacketSyncModifiers.TYPE, SPacketSyncModifiers.STREAM_CODEC,
+        CuriosClientPayloadHandler.getInstance()::handleSyncModifiers);
+    registrar.playToClient(SPacketSyncRender.TYPE, SPacketSyncRender.STREAM_CODEC,
+        CuriosClientPayloadHandler.getInstance()::handleSyncRender);
+    registrar.playToClient(SPacketBreak.TYPE, SPacketBreak.STREAM_CODEC,
+        CuriosClientPayloadHandler.getInstance()::handleBreak);
+    registrar.playToClient(SPacketPage.TYPE, SPacketPage.STREAM_CODEC,
+        CuriosClientPayloadHandler.getInstance()::handlePage);
+    registrar.playToClient(SPacketSetIcons.TYPE, SPacketSetIcons.STREAM_CODEC,
+        CuriosClientPayloadHandler.getInstance()::handleSetIcons);
+    registrar.playToClient(SPacketQuickMove.TYPE, SPacketQuickMove.STREAM_CODEC,
+        CuriosClientPayloadHandler.getInstance()::handleQuickMove);
   }
 }

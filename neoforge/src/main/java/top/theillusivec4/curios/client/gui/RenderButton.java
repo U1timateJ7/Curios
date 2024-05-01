@@ -37,7 +37,7 @@ public class RenderButton extends ImageButton {
 
   public RenderButton(CurioSlot slot, int xIn, int yIn, int widthIn, int heightIn, int xTexStartIn,
                       int yTexStartIn, ResourceLocation resourceLocationIn,
-                      Button.OnPress onPressIn) {
+                      OnPress onPressIn) {
     super(xIn, yIn, widthIn, heightIn, RecipeBookComponent.RECIPE_BUTTON_SPRITES, onPressIn);
     this.resourceLocation = resourceLocationIn;
     this.yTexStart = yTexStartIn;

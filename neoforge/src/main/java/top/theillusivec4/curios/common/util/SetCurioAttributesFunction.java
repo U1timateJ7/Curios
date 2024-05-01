@@ -26,6 +26,7 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.PrimitiveCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.List;
@@ -35,6 +36,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
 import net.minecraft.Util;
+import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -56,28 +58,39 @@ import top.theillusivec4.curios.api.SlotAttribute;
 
 public class SetCurioAttributesFunction extends LootItemConditionalFunction {
 
-  public static final Codec<SetCurioAttributesFunction> CODEC = RecordCodecBuilder.create(
-      (instance) -> commonFields(instance).and(
-              ExtraCodecs.nonEmptyList(Modifier.MODIFIER_CODEC.listOf()).fieldOf("modifiers")
-                  .forGetter((function) -> function.modifiers))
-          .apply(instance, SetCurioAttributesFunction::new));
-  public static LootItemFunctionType TYPE = null;
+  public static final MapCodec<SetCurioAttributesFunction> CODEC = RecordCodecBuilder.mapCodec(
+      instance -> commonFields(instance)
+          .and(
+              instance.group(
+                  ExtraCodecs.nonEmptyList(Modifier.MODIFIER_CODEC.listOf())
+                      .fieldOf("modifiers")
+                      .forGetter(function -> function.modifiers),
+                  Codec.BOOL.optionalFieldOf("replace", Boolean.TRUE)
+                      .forGetter(function -> function.replace)
+              )
+          )
+          .apply(instance, SetCurioAttributesFunction::new)
+  );
+  public static LootItemFunctionType<SetCurioAttributesFunction> TYPE = null;
 
   final List<Modifier> modifiers;
+  final boolean replace;
 
-  SetCurioAttributesFunction(List<LootItemCondition> conditions, List<Modifier> modifiers) {
+  SetCurioAttributesFunction(List<LootItemCondition> conditions, List<Modifier> modifiers,
+                             boolean replace) {
     super(conditions);
     this.modifiers = ImmutableList.copyOf(modifiers);
+    this.replace = replace;
   }
 
   public static void register() {
     TYPE = Registry.register(BuiltInRegistries.LOOT_FUNCTION_TYPE,
         new ResourceLocation(CuriosApi.MODID, "set_curio_attributes"),
-        new LootItemFunctionType(CODEC));
+        new LootItemFunctionType<>(CODEC));
   }
 
   @Nonnull
-  public LootItemFunctionType getType() {
+  public LootItemFunctionType<SetCurioAttributesFunction> getType() {
     return TYPE;
   }
 
@@ -107,24 +120,24 @@ public class SetCurioAttributesFunction extends LootItemConditionalFunction {
     return stack;
   }
 
-  record Modifier(String name, Attribute attribute, AttributeModifier.Operation operation,
+  record Modifier(String name, Holder<Attribute> attribute, AttributeModifier.Operation operation,
                   NumberProvider amount, Optional<UUID> id, List<String> slots) {
 
     private static final Codec<List<String>> SLOTS_CODEC = ExtraCodecs.nonEmptyList(
         Codec.either(Codec.STRING, Codec.list(Codec.STRING))
             .xmap((either) -> either.map(List::of, Function.identity()),
-                (list) -> list.size() == 1 ? Either.left(list.get(0)) : Either.right(list)));
+                (list) -> list.size() == 1 ? Either.left(list.getFirst()) : Either.right(list)));
 
-    private static final Codec<Attribute> ATTRIBUTE_CODEC = new PrimitiveCodec<>() {
+    private static final Codec<Holder<Attribute>> ATTRIBUTE_CODEC = new PrimitiveCodec<>() {
       @Override
-      public <T> DataResult<Attribute> read(DynamicOps<T> ops, T input) {
+      public <T> DataResult<Holder<Attribute>> read(DynamicOps<T> ops, T input) {
         return ops.getStringValue(input).map(name -> {
           ResourceLocation rl = ResourceLocation.tryParse(name);
 
           if (rl == null) {
             return null;
           }
-          Attribute attribute;
+          Holder<Attribute> attribute;
 
           if (rl.getNamespace().equals("curios")) {
             String identifier = rl.getPath();
@@ -134,36 +147,38 @@ public class SetCurioAttributesFunction extends LootItemConditionalFunction {
             }
             attribute = SlotAttribute.getOrCreate(identifier);
           } else {
-            attribute = BuiltInRegistries.ATTRIBUTE.get(rl);
+            attribute = BuiltInRegistries.ATTRIBUTE.getHolder(rl).orElse(null);
           }
           return attribute;
         });
       }
 
       @Override
-      public <T> T write(DynamicOps<T> ops, Attribute value) {
+      public <T> T write(DynamicOps<T> ops, Holder<Attribute> value) {
         ResourceLocation rl;
 
-        if (value instanceof SlotAttribute wrapper) {
+        if (value.value() instanceof SlotAttribute wrapper) {
           rl = new ResourceLocation(CuriosApi.MODID, wrapper.getIdentifier());
         } else {
-          rl = BuiltInRegistries.ATTRIBUTE.getKey(value);
+          rl = BuiltInRegistries.ATTRIBUTE.getKey(value.value());
         }
         return rl != null ? ops.createString(rl.toString()) : ops.empty();
       }
     };
     public static final Codec<Modifier> MODIFIER_CODEC =
         RecordCodecBuilder.create((instance) -> instance.group(
-                Codec.STRING.fieldOf("name").forGetter(Modifier::name),
+                Codec.STRING.fieldOf("name")
+                    .forGetter(Modifier::name),
                 ATTRIBUTE_CODEC.fieldOf("attribute")
                     .forGetter(Modifier::attribute),
                 AttributeModifier.Operation.CODEC.fieldOf("operation")
                     .forGetter(Modifier::operation),
                 NumberProviders.CODEC.fieldOf("amount")
                     .forGetter(Modifier::amount),
-                ExtraCodecs.strictOptionalField(
-                    UUIDUtil.STRING_CODEC, "id").forGetter(Modifier::id),
-                SLOTS_CODEC.fieldOf("slot").forGetter(Modifier::slots))
+                UUIDUtil.STRING_CODEC.optionalFieldOf("id")
+                    .forGetter(Modifier::id),
+                SLOTS_CODEC.fieldOf("slot")
+                    .forGetter(Modifier::slots))
             .apply(instance, Modifier::new));
   }
 }

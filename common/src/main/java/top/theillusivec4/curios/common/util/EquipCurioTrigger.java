@@ -86,13 +86,13 @@ public class EquipCurioTrigger extends SimpleCriterionTrigger<EquipCurioTrigger.
       implements SimpleInstance {
     public static final Codec<TriggerInstance> CODEC = RecordCodecBuilder.create(
         instance -> instance.group(
-                ExtraCodecs.strictOptionalField(EntityPredicate.ADVANCEMENT_CODEC, "player")
+                EntityPredicate.ADVANCEMENT_CODEC.optionalFieldOf("player")
                     .forGetter(TriggerInstance::player),
-                ExtraCodecs.strictOptionalField(ItemPredicate.CODEC, "item")
+                ItemPredicate.CODEC.optionalFieldOf("item")
                     .forGetter(TriggerInstance::item),
-                ExtraCodecs.strictOptionalField(LocationPredicate.CODEC, "location").forGetter(
+                LocationPredicate.CODEC.optionalFieldOf("location").forGetter(
                     TriggerInstance::location),
-                ExtraCodecs.strictOptionalField(SlotPredicate.CODEC, "curios:slot")
+                SlotPredicate.CODEC.optionalFieldOf("curios:slot")
                     .forGetter(TriggerInstance::slot)
             )
             .apply(instance, TriggerInstance::new)
@@ -107,7 +107,7 @@ public class EquipCurioTrigger extends SimpleCriterionTrigger<EquipCurioTrigger.
 
       if (this.location.isEmpty() ||
           this.location.get().matches(lootContext.getLevel(), vec3.x, vec3.y, vec3.z)) {
-        return this.item.isEmpty() || this.item.get().matches(stack);
+        return this.item.isEmpty() || this.item.get().test(stack);
       }
       return false;
     }

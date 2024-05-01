@@ -9,6 +9,8 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import javax.annotation.Nonnull;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -166,7 +168,7 @@ public class CurioInventory implements INBTSerializable<CompoundTag> {
   }
 
   @Override
-  public CompoundTag serializeNBT() {
+  public CompoundTag serializeNBT(@Nonnull HolderLookup.Provider provider) {
     CompoundTag compound = new CompoundTag();
 
     ListTag taglist = new ListTag();
@@ -181,7 +183,7 @@ public class CurioInventory implements INBTSerializable<CompoundTag> {
   }
 
   @Override
-  public void deserializeNBT(CompoundTag nbt) {
+  public void deserializeNBT(@Nonnull HolderLookup.Provider provider, @Nonnull CompoundTag nbt) {
     this.deserialized = nbt;
     this.markDeserialized = true;
   }

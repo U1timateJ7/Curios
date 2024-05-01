@@ -20,7 +20,9 @@
 package top.theillusivec4.curios.common.network.server;
 
 import javax.annotation.Nonnull;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import top.theillusivec4.curios.CuriosConstants;
@@ -28,22 +30,16 @@ import top.theillusivec4.curios.CuriosConstants;
 public record SPacketBreak(int entityId, String curioId, int slotId) implements
     CustomPacketPayload {
 
-  public static final ResourceLocation ID = new ResourceLocation(CuriosConstants.MOD_ID, "break");
+  public static final Type<SPacketBreak> TYPE =
+      new Type<>(new ResourceLocation(CuriosConstants.MOD_ID, "break"));
 
-  public SPacketBreak(final FriendlyByteBuf buf) {
-    this(buf.readInt(), buf.readUtf(), buf.readInt());
-  }
-
-  @Override
-  public void write(@Nonnull FriendlyByteBuf buf) {
-    buf.writeInt(this.entityId());
-    buf.writeUtf(this.curioId());
-    buf.writeInt(this.slotId());
-  }
+  public static final StreamCodec<RegistryFriendlyByteBuf, SPacketBreak> STREAM_CODEC =
+      StreamCodec.composite(ByteBufCodecs.INT, SPacketBreak::entityId, ByteBufCodecs.STRING_UTF8,
+          SPacketBreak::curioId, ByteBufCodecs.INT, SPacketBreak::slotId, SPacketBreak::new);
 
   @Nonnull
   @Override
-  public ResourceLocation id() {
-    return ID;
+  public Type<? extends CustomPacketPayload> type() {
+    return TYPE;
   }
 }

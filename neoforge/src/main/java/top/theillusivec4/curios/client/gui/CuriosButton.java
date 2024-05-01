@@ -61,7 +61,7 @@ public class CuriosButton extends ImageButton {
               InventoryScreen inventory = new InventoryScreen(mc.player);
               mc.setScreen(inventory);
               mc.player.containerMenu.setCarried(stack);
-              PacketDistributor.SERVER.noArg().send(new CPacketOpenVanilla(stack));
+              PacketDistributor.sendToServer(new CPacketOpenVanilla(stack));
             } else {
 
               if (parentGui instanceof InventoryScreen inventory) {
@@ -71,7 +71,7 @@ public class CuriosButton extends ImageButton {
                   recipeBookGui.toggleVisibility();
                 }
               }
-              PacketDistributor.SERVER.noArg().send(new CPacketOpenCurios(stack));
+              PacketDistributor.sendToServer(new CPacketOpenCurios(stack));
             }
           }
         });

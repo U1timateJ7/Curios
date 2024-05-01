@@ -8,6 +8,8 @@ import net.minecraft.advancements.critereon.ItemPredicate;
 import net.minecraft.advancements.critereon.LocationPredicate;
 import net.minecraft.advancements.critereon.MinMaxBounds;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.biome.Biomes;
@@ -29,7 +31,7 @@ public class CuriosGenerator implements AdvancementProvider.AdvancementGenerator
                 .withItem(ItemPredicate.Builder.item()
                     .of(Items.DIAMOND))
                 .withLocation(LocationPredicate.Builder.location()
-                    .setBiome(Biomes.BADLANDS))
+                    .setBiomes(HolderSet.direct(registries.lookupOrThrow(Registries.BIOME).getOrThrow(Biomes.BADLANDS))))
                 .withSlot(SlotPredicate.Builder.slot()
                     .of("ring", "necklace")
                     .withIndex(MinMaxBounds.Ints.between(0, 10)))

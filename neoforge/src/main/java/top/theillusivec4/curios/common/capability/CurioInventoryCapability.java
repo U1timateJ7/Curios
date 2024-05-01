@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
+import net.minecraft.core.Holder;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -349,8 +350,8 @@ public class CurioInventoryCapability implements ICuriosItemHandler {
       ICurioStacksHandler stacksHandler = entry.getValue();
       IDynamicStackHandler stacks = stacksHandler.getStacks();
       IDynamicStackHandler cosmetics = stacksHandler.getCosmeticStacks();
-      tag.put("Stacks", stacks.serializeNBT());
-      tag.put("Cosmetics", cosmetics.serializeNBT());
+      tag.put("Stacks", stacks.serializeNBT(this.livingEntity.level().registryAccess()));
+      tag.put("Cosmetics", cosmetics.serializeNBT(this.livingEntity.level().registryAccess()));
       tag.putString("Identifier", entry.getKey());
       taglist.add(tag);
 
@@ -384,13 +385,13 @@ public class CurioInventoryCapability implements ICuriosItemHandler {
           IDynamicStackHandler stacks = stacksHandler.getStacks();
 
           if (!stacksData.isEmpty()) {
-            loaded.deserializeNBT(stacksData);
+            loaded.deserializeNBT(this.livingEntity.level().registryAccess(), stacksData);
             loadStacks(stacksHandler, loaded, stacks);
           }
           stacksData = tag.getCompound("Cosmetics");
 
           if (!stacksData.isEmpty()) {
-            loaded.deserializeNBT(stacksData);
+            loaded.deserializeNBT(this.livingEntity.level().registryAccess(), stacksData);
             stacks = stacksHandler.getCosmeticStacks();
             loadStacks(stacksHandler, loaded, stacks);
           }
@@ -455,7 +456,7 @@ public class CurioInventoryCapability implements ICuriosItemHandler {
   @Override
   public void removeSlotModifier(String slot, UUID uuid) {
     Multimap<String, AttributeModifier> map = LinkedHashMultimap.create();
-    map.put(slot, new AttributeModifier(uuid, "", 0, AttributeModifier.Operation.ADDITION));
+    map.put(slot, new AttributeModifier(uuid, "", 0, AttributeModifier.Operation.ADD_VALUE));
     this.removeSlotModifiers(map);
   }
 
@@ -469,7 +470,7 @@ public class CurioInventoryCapability implements ICuriosItemHandler {
         ICurioStacksHandler stacksHandler = this.curioInventory.asMap().get(id);
 
         if (stacksHandler != null) {
-          stacksHandler.removeModifier(attributeModifier.getId());
+          stacksHandler.removeModifier(attributeModifier.id());
         }
       }
     }
@@ -503,12 +504,12 @@ public class CurioInventoryCapability implements ICuriosItemHandler {
             SlotContext slotContext = new SlotContext(id, this.getWearer(), i, false,
                 renderStates.size() > i && renderStates.get(i));
             UUID uuid = CuriosApi.getSlotUuid(slotContext);
-            Multimap<Attribute, AttributeModifier> map =
+            Multimap<Holder<Attribute>, AttributeModifier> map =
                 CuriosApi.getAttributeModifiers(slotContext, uuid, stack);
 
-            for (Attribute attribute : map.keySet()) {
+            for (Holder<Attribute> attribute : map.keySet()) {
 
-              if (attribute instanceof SlotAttribute wrapper) {
+              if (attribute.value() instanceof SlotAttribute wrapper) {
                 slots.putAll(wrapper.getIdentifier(), map.get(attribute));
               }
             }
@@ -558,14 +559,14 @@ public class CurioInventoryCapability implements ICuriosItemHandler {
 
   @Override
   public Tag writeTag() {
-    return this.curioInventory.serializeNBT();
+    return this.curioInventory.serializeNBT(this.livingEntity.level().registryAccess());
   }
 
   @Override
   public void readTag(Tag nbt) {
 
     if (nbt instanceof CompoundTag tag) {
-      this.curioInventory.deserializeNBT(tag);
+      this.curioInventory.deserializeNBT(this.livingEntity.level().registryAccess(), tag);
     }
   }
 }

@@ -27,7 +27,7 @@ import net.neoforged.neoforge.event.entity.living.LivingEvent;
 /**
  * {@link CurioChangeEvent} is fired when the Curio of a LivingEntity changes. <br> This event is
  * fired whenever changes in curios are detected in
- * <br> {@link net.neoforged.neoforge.event.entity.living.LivingEvent.LivingTickEvent}.
+ * <br> {@link net.neoforged.neoforge.event.tick.EntityTickEvent}.
  * <br> This also includes entities joining the World, as well as being cloned. <br> This event is
  * fired on server-side only. <br>
  * <br>

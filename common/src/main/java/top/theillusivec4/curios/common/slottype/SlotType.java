@@ -45,7 +45,7 @@ public final class SlotType implements ISlotType {
   private final Set<ResourceLocation> validators;
 
   public static ISlotType from(CompoundTag tag) {
-    SlotType.Builder builder = new Builder(tag.getString("Identifier"));
+    Builder builder = new Builder(tag.getString("Identifier"));
     builder.icon(new ResourceLocation(tag.getString("Icon")));
     builder.order(tag.getInt("Order"));
     builder.size(tag.getInt("Size"));

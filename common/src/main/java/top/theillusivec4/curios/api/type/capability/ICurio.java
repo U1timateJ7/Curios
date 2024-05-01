@@ -19,13 +19,14 @@
 
 package top.theillusivec4.curios.api.type.capability;
 
-import com.google.common.collect.HashMultimap;
+import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -130,9 +131,9 @@ public interface ICurio {
    * @param uuid        Slot-unique UUID
    * @return A map of attribute modifiers to apply
    */
-  default Multimap<Attribute, AttributeModifier> getAttributeModifiers(SlotContext slotContext,
-                                                                       UUID uuid) {
-    return getAttributeModifiers(slotContext.identifier());
+  default Multimap<Holder<Attribute>, AttributeModifier> getAttributeModifiers(
+      SlotContext slotContext, UUID uuid) {
+    return LinkedHashMultimap.create();
   }
 
   /**
@@ -157,7 +158,7 @@ public interface ICurio {
    */
   @Nonnull
   default SoundInfo getEquipSound(SlotContext slotContext) {
-    return new SoundInfo(SoundEvents.ARMOR_EQUIP_GENERIC, 1.0f, 1.0f);
+    return new SoundInfo(SoundEvents.ARMOR_EQUIP_GENERIC.value(), 1.0f, 1.0f);
   }
 
   /**
@@ -462,7 +463,7 @@ public interface ICurio {
   @ApiStatus.ScheduledForRemoval(inVersion = "1.21")
   default int getFortuneBonus(String identifier, LivingEntity livingEntity, ItemStack curio,
                               int index) {
-    return EnchantmentHelper.getItemEnchantmentLevel(Enchantments.BLOCK_FORTUNE, curio);
+    return EnchantmentHelper.getItemEnchantmentLevel(Enchantments.FORTUNE, curio);
   }
 
   /**
@@ -472,7 +473,7 @@ public interface ICurio {
   @ApiStatus.ScheduledForRemoval(inVersion = "1.21")
   default int getLootingBonus(String identifier, LivingEntity livingEntity, ItemStack curio,
                               int index) {
-    return EnchantmentHelper.getItemEnchantmentLevel(Enchantments.MOB_LOOTING, curio);
+    return EnchantmentHelper.getItemEnchantmentLevel(Enchantments.LOOTING, curio);
   }
 
   /**
@@ -541,19 +542,9 @@ public interface ICurio {
   @Deprecated(forRemoval = true)
   @ApiStatus.ScheduledForRemoval(inVersion = "1.21")
   default void playRightClickEquipSound(LivingEntity livingEntity) {
-    // Not enough context for id and index so we just pass in artificial values with the entity
+    // Not enough context for id and index, so we just pass in artificial values with the entity
     SoundInfo soundInfo = getEquipSound(new SlotContext("", livingEntity, 0, false, true));
     livingEntity.level().playSound(null, livingEntity.blockPosition(), soundInfo.getSoundEvent(),
         livingEntity.getSoundSource(), soundInfo.getVolume(), soundInfo.getPitch());
-  }
-
-  /**
-   * @deprecated See {@link ICurio#getAttributeModifiers(SlotContext, UUID)} for an updated
-   * alternative with additional context and a slot-unique UUID parameter.
-   */
-  @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "1.21")
-  default Multimap<Attribute, AttributeModifier> getAttributeModifiers(String identifier) {
-    return HashMultimap.create();
   }
 }

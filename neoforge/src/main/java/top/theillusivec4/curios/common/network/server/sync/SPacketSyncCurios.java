@@ -24,6 +24,8 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import top.theillusivec4.curios.CuriosConstants;
@@ -31,8 +33,27 @@ import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
 
 public class SPacketSyncCurios implements CustomPacketPayload {
 
-  public static final ResourceLocation ID =
-      new ResourceLocation(CuriosConstants.MOD_ID, "sync_curios");
+  public static final Type<SPacketSyncCurios> TYPE =
+      new Type<>(new ResourceLocation(CuriosConstants.MOD_ID, "sync_curios"));
+  public static final StreamCodec<RegistryFriendlyByteBuf, SPacketSyncCurios> STREAM_CODEC =
+      new StreamCodec<>() {
+        @Nonnull
+        @Override
+        public SPacketSyncCurios decode(@Nonnull RegistryFriendlyByteBuf buf) {
+          return new SPacketSyncCurios(buf);
+        }
+
+        @Override
+        public void encode(@Nonnull RegistryFriendlyByteBuf buf, SPacketSyncCurios packet) {
+          buf.writeInt(packet.entityId);
+          buf.writeInt(packet.entrySize);
+
+          for (Map.Entry<String, CompoundTag> entry : packet.map.entrySet()) {
+            buf.writeUtf(entry.getKey());
+            buf.writeNbt(entry.getValue());
+          }
+        }
+      };
 
   public final int entityId;
   public final int entrySize;
@@ -49,12 +70,6 @@ public class SPacketSyncCurios implements CustomPacketPayload {
     this.map = result;
   }
 
-  public SPacketSyncCurios(Map<String, CompoundTag> map, int entityId) {
-    this.entityId = entityId;
-    this.entrySize = map.size();
-    this.map = map;
-  }
-
   public SPacketSyncCurios(final FriendlyByteBuf buf) {
     int entityId = buf.readInt();
     int entrySize = buf.readInt();
@@ -69,20 +84,9 @@ public class SPacketSyncCurios implements CustomPacketPayload {
     this.map = map;
   }
 
-  @Override
-  public void write(@Nonnull FriendlyByteBuf buf) {
-    buf.writeInt(this.entityId);
-    buf.writeInt(this.entrySize);
-
-    for (Map.Entry<String, CompoundTag> entry : this.map.entrySet()) {
-      buf.writeUtf(entry.getKey());
-      buf.writeNbt(entry.getValue());
-    }
-  }
-
   @Nonnull
   @Override
-  public ResourceLocation id() {
-    return ID;
+  public Type<? extends CustomPacketPayload> type() {
+    return TYPE;
   }
 }

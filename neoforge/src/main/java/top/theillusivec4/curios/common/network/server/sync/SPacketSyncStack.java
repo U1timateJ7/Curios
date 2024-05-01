@@ -21,7 +21,9 @@ package top.theillusivec4.curios.common.network.server.sync;
 
 import javax.annotation.Nonnull;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -31,27 +33,20 @@ public record SPacketSyncStack(int entityId, String curioId, int slotId, ItemSta
                                int handlerType, CompoundTag compoundTag) implements
     CustomPacketPayload {
 
-  public static final ResourceLocation ID =
-      new ResourceLocation(CuriosConstants.MOD_ID, "sync_stack");
+  public static final Type<SPacketSyncStack> TYPE =
+      new Type<>(new ResourceLocation(CuriosConstants.MOD_ID, "sync_stack"));
 
-  public SPacketSyncStack(final FriendlyByteBuf buf) {
-    this(buf.readInt(), buf.readUtf(), buf.readInt(), buf.readItem(), buf.readInt(), buf.readNbt());
-  }
-
-  @Override
-  public void write(@Nonnull FriendlyByteBuf buf) {
-    buf.writeInt(this.entityId());
-    buf.writeUtf(this.curioId());
-    buf.writeInt(this.slotId());
-    buf.writeItem(this.stack());
-    buf.writeInt(this.handlerType());
-    buf.writeNbt(this.compoundTag());
-  }
+  public static final StreamCodec<RegistryFriendlyByteBuf, SPacketSyncStack> STREAM_CODEC =
+      StreamCodec.composite(ByteBufCodecs.INT, SPacketSyncStack::entityId,
+          ByteBufCodecs.STRING_UTF8, SPacketSyncStack::curioId, ByteBufCodecs.INT,
+          SPacketSyncStack::slotId, ItemStack.STREAM_CODEC, SPacketSyncStack::stack,
+          ByteBufCodecs.INT, SPacketSyncStack::handlerType, ByteBufCodecs.COMPOUND_TAG,
+          SPacketSyncStack::compoundTag, SPacketSyncStack::new);
 
   @Nonnull
   @Override
-  public ResourceLocation id() {
-    return ID;
+  public Type<? extends CustomPacketPayload> type() {
+    return TYPE;
   }
 
   public enum HandlerType {

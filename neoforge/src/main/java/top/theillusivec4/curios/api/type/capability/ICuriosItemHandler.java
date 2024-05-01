@@ -339,8 +339,8 @@ public interface ICuriosItemHandler {
   }
 
   /**
-   * @deprecated See {@link top.theillusivec4.curios.api.type.capability.ICuriosItemHandler#addTransientSlotModifiers(Multimap)}
-   * and {@link top.theillusivec4.curios.api.type.capability.ICuriosItemHandler#addPermanentSlotModifiers(Multimap)}
+   * @deprecated See {@link ICuriosItemHandler#addTransientSlotModifiers(Multimap)}
+   * and {@link ICuriosItemHandler#addPermanentSlotModifiers(Multimap)}
    */
   @Deprecated(forRemoval = true)
   @ApiStatus.ScheduledForRemoval(inVersion = "1.21")
@@ -349,8 +349,8 @@ public interface ICuriosItemHandler {
   }
 
   /**
-   * @deprecated See {@link top.theillusivec4.curios.api.type.capability.ICuriosItemHandler#addTransientSlotModifiers(Multimap)}
-   * and {@link top.theillusivec4.curios.api.type.capability.ICuriosItemHandler#addPermanentSlotModifiers(Multimap)}
+   * @deprecated See {@link ICuriosItemHandler#addTransientSlotModifiers(Multimap)}
+   * and {@link ICuriosItemHandler#addPermanentSlotModifiers(Multimap)}
    */
   @Deprecated(forRemoval = true)
   @ApiStatus.ScheduledForRemoval(inVersion = "1.21")
@@ -397,16 +397,16 @@ public interface ICuriosItemHandler {
   }
 
   /**
-   * @deprecated See {@link top.theillusivec4.curios.api.type.capability.ICuriosItemHandler#addTransientSlotModifiers(Multimap)}
-   * and {@link top.theillusivec4.curios.api.type.capability.ICuriosItemHandler#addPermanentSlotModifiers(Multimap)}
+   * @deprecated See {@link ICuriosItemHandler#addTransientSlotModifiers(Multimap)}
+   * and {@link ICuriosItemHandler#addPermanentSlotModifiers(Multimap)}
    */
   @Deprecated(forRemoval = true)
   @ApiStatus.ScheduledForRemoval(inVersion = "1.21")
   void growSlotType(String identifier, int amount);
 
   /**
-   * @deprecated See {@link top.theillusivec4.curios.api.type.capability.ICuriosItemHandler#addTransientSlotModifiers(Multimap)}
-   * and {@link top.theillusivec4.curios.api.type.capability.ICuriosItemHandler#addPermanentSlotModifiers(Multimap)}
+   * @deprecated See {@link ICuriosItemHandler#addTransientSlotModifiers(Multimap)}
+   * and {@link ICuriosItemHandler#addPermanentSlotModifiers(Multimap)}
    */
   @Deprecated(forRemoval = true)
   @ApiStatus.ScheduledForRemoval(inVersion = "1.21")

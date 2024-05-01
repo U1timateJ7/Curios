@@ -30,8 +30,8 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.SlotContext;
-import top.theillusivec4.curios.api.event.CurioEquipEvent;
-import top.theillusivec4.curios.api.event.CurioUnequipEvent;
+import top.theillusivec4.curios.api.event.CurioCanEquipEvent;
+import top.theillusivec4.curios.api.event.CurioCanUnequipEvent;
 import top.theillusivec4.curios.api.type.inventory.IDynamicStackHandler;
 
 public class DynamicStackHandler extends ItemStackHandler implements IDynamicStackHandler {
@@ -62,7 +62,7 @@ public class DynamicStackHandler extends ItemStackHandler implements IDynamicSta
   @Override
   public boolean isItemValid(int slot, @Nonnull ItemStack stack) {
     SlotContext ctx = ctxBuilder.apply(slot);
-    CurioEquipEvent equipEvent = new CurioEquipEvent(stack, ctx);
+    CurioCanEquipEvent equipEvent = new CurioCanEquipEvent(stack, ctx);
     NeoForge.EVENT_BUS.post(equipEvent);
     Event.Result result = equipEvent.getEquipResult();
 
@@ -78,7 +78,7 @@ public class DynamicStackHandler extends ItemStackHandler implements IDynamicSta
   public @Nonnull ItemStack extractItem(int slot, int amount, boolean simulate) {
     ItemStack existing = this.stacks.get(slot);
     SlotContext ctx = ctxBuilder.apply(slot);
-    CurioUnequipEvent unequipEvent = new CurioUnequipEvent(existing, ctx);
+    CurioCanUnequipEvent unequipEvent = new CurioCanUnequipEvent(existing, ctx);
     NeoForge.EVENT_BUS.post(unequipEvent);
     Event.Result result = unequipEvent.getUnequipResult();
 

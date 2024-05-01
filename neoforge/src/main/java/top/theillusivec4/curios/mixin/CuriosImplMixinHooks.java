@@ -19,20 +19,19 @@
 
 package top.theillusivec4.curios.mixin;
 
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
@@ -46,6 +45,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
+import top.theillusivec4.curios.api.CurioAttributeModifiers;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.CuriosCapability;
 import top.theillusivec4.curios.api.SlotAttribute;
@@ -56,6 +56,7 @@ import top.theillusivec4.curios.api.type.ISlotType;
 import top.theillusivec4.curios.api.type.capability.ICurio;
 import top.theillusivec4.curios.api.type.capability.ICurioItem;
 import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
+import top.theillusivec4.curios.common.CuriosRegistry;
 import top.theillusivec4.curios.common.data.CuriosEntityManager;
 import top.theillusivec4.curios.common.data.CuriosSlotManager;
 import top.theillusivec4.curios.common.network.server.SPacketBreak;
@@ -174,32 +175,26 @@ public class CuriosImplMixinHooks {
     return false;
   }
 
-  public static Multimap<Attribute, AttributeModifier> getAttributeModifiers(
+  public static Multimap<Holder<Attribute>, AttributeModifier> getAttributeModifiers(
       SlotContext slotContext, UUID uuid, ItemStack stack) {
-    Multimap<Attribute, AttributeModifier> multimap = HashMultimap.create();
+    Multimap<Holder<Attribute>, AttributeModifier> multimap = LinkedHashMultimap.create();
+    CurioAttributeModifiers attributemodifiers =
+        stack.getOrDefault(CuriosRegistry.CURIO_ATTRIBUTE_MODIFIERS, CurioAttributeModifiers.EMPTY);
 
-    if (stack.getTag() != null && stack.getTag().contains("CurioAttributeModifiers", 9)) {
-      ListTag listnbt = stack.getTag().getList("CurioAttributeModifiers", 10);
-      String identifier = slotContext.identifier();
+    if (!attributemodifiers.modifiers().isEmpty()) {
 
-      for (int i = 0; i < listnbt.size(); ++i) {
-        CompoundTag compoundnbt = listnbt.getCompound(i);
+      for (CurioAttributeModifiers.Entry modifier : attributemodifiers.modifiers()) {
 
-        if (compoundnbt.getString("Slot").equals(identifier)) {
-          ResourceLocation rl = ResourceLocation.tryParse(compoundnbt.getString("AttributeName"));
-          UUID id = uuid;
+        if (modifier.slot().equals(slotContext.identifier())) {
+          ResourceLocation rl = modifier.attribute();
+          AttributeModifier attributeModifier = modifier.modifier();
 
           if (rl != null) {
 
-            if (compoundnbt.contains("UUID")) {
-              id = compoundnbt.getUUID("UUID");
-            }
-
-            if (id.getLeastSignificantBits() != 0L && id.getMostSignificantBits() != 0L) {
-              AttributeModifier.Operation operation =
-                  AttributeModifier.Operation.fromValue(compoundnbt.getInt("Operation"));
-              double amount = compoundnbt.getDouble("Amount");
-              String name = compoundnbt.getString("Name");
+            if (uuid.getLeastSignificantBits() != 0L && uuid.getMostSignificantBits() != 0L) {
+              AttributeModifier.Operation operation = attributeModifier.operation();
+              double amount = attributeModifier.amount();
+              String name = attributeModifier.name();
 
               if (rl.getNamespace().equals("curios")) {
                 String identifier1 = rl.getPath();
@@ -207,13 +202,14 @@ public class CuriosImplMixinHooks {
                 boolean clientSide = livingEntity == null || livingEntity.level().isClientSide();
 
                 if (CuriosApi.getSlot(identifier1, clientSide).isPresent()) {
-                  CuriosApi.addSlotModifier(multimap, identifier1, id, amount, operation);
+                  CuriosApi.addSlotModifier(multimap, identifier1, uuid, amount, operation);
                 }
               } else {
-                Attribute attribute = BuiltInRegistries.ATTRIBUTE.getOptional(rl).orElse(null);
+                Holder<Attribute> attribute =
+                    BuiltInRegistries.ATTRIBUTE.getHolder(rl).orElse(null);
 
                 if (attribute != null) {
-                  multimap.put(attribute, new AttributeModifier(id, name, amount, operation));
+                  multimap.put(attribute, new AttributeModifier(uuid, name, amount, operation));
                 }
               }
             }
@@ -230,8 +226,8 @@ public class CuriosImplMixinHooks {
     return LinkedHashMultimap.create(evt.getModifiers());
   }
 
-  public static void addSlotModifier(Multimap<Attribute, AttributeModifier> map, String identifier,
-                                     UUID uuid, double amount,
+  public static void addSlotModifier(Multimap<Holder<Attribute>, AttributeModifier> map,
+                                     String identifier, UUID uuid, double amount,
                                      AttributeModifier.Operation operation) {
     map.put(SlotAttribute.getOrCreate(identifier),
         new AttributeModifier(uuid, identifier, amount, operation));
@@ -243,46 +239,34 @@ public class CuriosImplMixinHooks {
     addModifier(stack, SlotAttribute.getOrCreate(identifier), name, uuid, amount, operation, slot);
   }
 
-  public static void addModifier(ItemStack stack, Attribute attribute, String name, UUID uuid,
-                                 double amount, AttributeModifier.Operation operation,
+  public static void addModifier(ItemStack stack, Holder<Attribute> attribute, String name,
+                                 UUID uuid, double amount, AttributeModifier.Operation operation,
                                  String slot) {
-    CompoundTag tag = stack.getOrCreateTag();
+    ResourceLocation rl;
 
-    if (!tag.contains("CurioAttributeModifiers", 9)) {
-      tag.put("CurioAttributeModifiers", new ListTag());
-    }
-    ListTag listtag = tag.getList("CurioAttributeModifiers", 10);
-    CompoundTag compoundtag = new CompoundTag();
-    compoundtag.putString("Name", name);
-    compoundtag.putDouble("Amount", amount);
-    compoundtag.putInt("Operation", operation.toValue());
-
-    if (uuid != null) {
-      compoundtag.putUUID("UUID", uuid);
-    }
-    String id = "";
-
-    if (attribute instanceof SlotAttribute wrapper) {
-      id = "curios:" + wrapper.getIdentifier();
+    if (attribute.value() instanceof SlotAttribute wrapper) {
+      rl = new ResourceLocation("curios:" + wrapper.getIdentifier());
     } else {
-      ResourceLocation rl = BuiltInRegistries.ATTRIBUTE.getKey(attribute);
-
-      if (rl != null) {
-        id = rl.toString();
-      }
+      rl = BuiltInRegistries.ATTRIBUTE.getKey(attribute.value());
     }
-
-    if (!id.isEmpty()) {
-      compoundtag.putString("AttributeName", id);
-    }
-    compoundtag.putString("Slot", slot);
-    listtag.add(compoundtag);
+    AttributeModifier attributeModifier = new AttributeModifier(uuid, name, amount, operation);
+    CurioAttributeModifiers.Entry entry =
+        new CurioAttributeModifiers.Entry(rl, attributeModifier, slot);
+    CurioAttributeModifiers curioAttributeModifiers =
+        stack.getOrDefault(CuriosRegistry.CURIO_ATTRIBUTE_MODIFIERS, CurioAttributeModifiers.EMPTY);
+    List<CurioAttributeModifiers.Entry> list = curioAttributeModifiers.modifiers();
+    list.add(entry);
+    stack.set(CuriosRegistry.CURIO_ATTRIBUTE_MODIFIERS,
+        new CurioAttributeModifiers(list, curioAttributeModifiers.showInTooltip()));
   }
 
   public static void broadcastCurioBreakEvent(SlotContext slotContext) {
-    PacketDistributor.TRACKING_ENTITY_AND_SELF.with(slotContext.entity()).send(
-        new SPacketBreak(slotContext.entity().getId(), slotContext.identifier(),
-            slotContext.index()));
+    LivingEntity livingEntity = slotContext.entity();
+
+    if (livingEntity != null) {
+      PacketDistributor.sendToPlayersTrackingEntityAndSelf(livingEntity,
+          new SPacketBreak(livingEntity.getId(), slotContext.identifier(), slotContext.index()));
+    }
   }
 
   private static final Map<String, UUID> UUIDS = new HashMap<>();

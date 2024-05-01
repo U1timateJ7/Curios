@@ -23,14 +23,34 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nonnull;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import top.theillusivec4.curios.CuriosConstants;
 
 public class SPacketSetIcons implements CustomPacketPayload {
 
-  public static final ResourceLocation ID =
-      new ResourceLocation(CuriosConstants.MOD_ID, "set_icons");
+  public static final Type<SPacketSetIcons> TYPE =
+      new Type<>(new ResourceLocation(CuriosConstants.MOD_ID, "set_icons"));
+  public static final StreamCodec<RegistryFriendlyByteBuf, SPacketSetIcons> STREAM_CODEC =
+      new StreamCodec<>() {
+        @Nonnull
+        @Override
+        public SPacketSetIcons decode(@Nonnull RegistryFriendlyByteBuf buf) {
+          return new SPacketSetIcons(buf);
+        }
+
+        @Override
+        public void encode(@Nonnull RegistryFriendlyByteBuf buf, SPacketSetIcons packet) {
+          buf.writeInt(packet.entrySize);
+
+          for (Map.Entry<String, ResourceLocation> entry : packet.map.entrySet()) {
+            buf.writeUtf(entry.getKey());
+            buf.writeUtf(entry.getValue().toString());
+          }
+        }
+      };
 
   private final int entrySize;
   public final Map<String, ResourceLocation> map;
@@ -51,19 +71,9 @@ public class SPacketSetIcons implements CustomPacketPayload {
     this.map = map;
   }
 
-  @Override
-  public void write(@Nonnull FriendlyByteBuf buf) {
-    buf.writeInt(this.entrySize);
-
-    for (Map.Entry<String, ResourceLocation> entry : this.map.entrySet()) {
-      buf.writeUtf(entry.getKey());
-      buf.writeUtf(entry.getValue().toString());
-    }
-  }
-
   @Nonnull
   @Override
-  public ResourceLocation id() {
-    return ID;
+  public Type<? extends CustomPacketPayload> type() {
+    return TYPE;
   }
 }

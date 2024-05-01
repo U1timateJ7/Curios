@@ -26,7 +26,7 @@ import net.minecraft.world.item.ItemStack;
 public class RingItem extends Item {
 
   public RingItem() {
-    super(new Item.Properties().stacksTo(1).defaultDurability(0));
+    super(new Item.Properties().stacksTo(1).durability(0));
   }
 
   @Override

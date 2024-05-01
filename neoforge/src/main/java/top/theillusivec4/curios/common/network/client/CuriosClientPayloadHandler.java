@@ -12,14 +12,13 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.network.handling.PlayPayloadContext;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.SlotContext;
 import top.theillusivec4.curios.api.event.SlotModifiersUpdatedEvent;
@@ -27,17 +26,14 @@ import top.theillusivec4.curios.api.type.ICuriosMenu;
 import top.theillusivec4.curios.api.type.capability.ICurio;
 import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
 import top.theillusivec4.curios.client.gui.CuriosScreen;
-import top.theillusivec4.curios.client.gui.CuriosScreenV2;
 import top.theillusivec4.curios.common.data.CuriosEntityManager;
 import top.theillusivec4.curios.common.data.CuriosSlotManager;
 import top.theillusivec4.curios.common.inventory.CurioStacksHandler;
 import top.theillusivec4.curios.common.inventory.container.CuriosContainer;
-import top.theillusivec4.curios.common.inventory.container.CuriosContainerV2;
 import top.theillusivec4.curios.common.network.server.SPacketBreak;
 import top.theillusivec4.curios.common.network.server.SPacketGrabbedItem;
 import top.theillusivec4.curios.common.network.server.SPacketPage;
 import top.theillusivec4.curios.common.network.server.SPacketQuickMove;
-import top.theillusivec4.curios.common.network.server.SPacketScroll;
 import top.theillusivec4.curios.common.network.server.SPacketSetIcons;
 import top.theillusivec4.curios.common.network.server.sync.SPacketSyncCurios;
 import top.theillusivec4.curios.common.network.server.sync.SPacketSyncData;
@@ -54,17 +50,8 @@ public class CuriosClientPayloadHandler {
     return INSTANCE;
   }
 
-  private static void handleData(final PlayPayloadContext ctx, Runnable handler) {
-    ctx.workHandler().submitAsync(handler)
-        .exceptionally(e -> {
-          ctx.packetHandler()
-              .disconnect(Component.translatable("curios.networking.failed", e.getMessage()));
-          return null;
-        });
-  }
-
-  public void handleSetIcons(final SPacketSetIcons data, final PlayPayloadContext ctx) {
-    handleData(ctx, () -> {
+  public void handleSetIcons(final SPacketSetIcons data, final IPayloadContext ctx) {
+    ctx.enqueueWork(() -> {
       ClientLevel world = Minecraft.getInstance().level;
       Set<String> slotIds = new HashSet<>();
 
@@ -83,8 +70,20 @@ public class CuriosClientPayloadHandler {
     });
   }
 
-  public void handleScroll(final SPacketScroll data, final PlayPayloadContext ctx) {
-    handleData(ctx, () -> {
+  public void handleQuickMove(final SPacketQuickMove data, final IPayloadContext ctx) {
+    ctx.enqueueWork(() -> {
+      Minecraft mc = Minecraft.getInstance();
+      LocalPlayer clientPlayer = mc.player;
+
+      if (clientPlayer != null &&
+          clientPlayer.containerMenu instanceof CuriosContainer container) {
+        container.quickMoveStack(clientPlayer, data.moveIndex());
+      }
+    });
+  }
+
+  public void handlePage(final SPacketPage data, final IPayloadContext ctx) {
+    ctx.enqueueWork(() -> {
       Minecraft mc = Minecraft.getInstance();
       LocalPlayer clientPlayer = mc.player;
       Screen screen = mc.screen;
@@ -93,7 +92,7 @@ public class CuriosClientPayloadHandler {
         AbstractContainerMenu container = clientPlayer.containerMenu;
 
         if (container instanceof CuriosContainer && container.containerId == data.windowId()) {
-          ((CuriosContainer) container).scrollToIndex(data.index());
+          ((CuriosContainer) container).setPage(data.page());
         }
       }
 
@@ -103,40 +102,8 @@ public class CuriosClientPayloadHandler {
     });
   }
 
-  public void handleQuickMove(final SPacketQuickMove data, final PlayPayloadContext ctx) {
-    handleData(ctx, () -> {
-      Minecraft mc = Minecraft.getInstance();
-      LocalPlayer clientPlayer = mc.player;
-
-      if (clientPlayer != null &&
-          clientPlayer.containerMenu instanceof CuriosContainerV2 container) {
-        container.quickMoveStack(clientPlayer, data.moveIndex());
-      }
-    });
-  }
-
-  public void handlePage(final SPacketPage data, final PlayPayloadContext ctx) {
-    handleData(ctx, () -> {
-      Minecraft mc = Minecraft.getInstance();
-      LocalPlayer clientPlayer = mc.player;
-      Screen screen = mc.screen;
-
-      if (clientPlayer != null) {
-        AbstractContainerMenu container = clientPlayer.containerMenu;
-
-        if (container instanceof CuriosContainerV2 && container.containerId == data.windowId()) {
-          ((CuriosContainerV2) container).setPage(data.page());
-        }
-      }
-
-      if (screen instanceof CuriosScreenV2) {
-        ((CuriosScreenV2) screen).updateRenderButtons();
-      }
-    });
-  }
-
-  public void handleBreak(final SPacketBreak data, final PlayPayloadContext ctx) {
-    handleData(ctx, () -> {
+  public void handleBreak(final SPacketBreak data, final IPayloadContext ctx) {
+    ctx.enqueueWork(() -> {
       ClientLevel world = Minecraft.getInstance().level;
 
       if (world != null) {
@@ -161,8 +128,8 @@ public class CuriosClientPayloadHandler {
     });
   }
 
-  public void handleSyncRender(final SPacketSyncRender data, final PlayPayloadContext ctx) {
-    handleData(ctx, () -> {
+  public void handleSyncRender(final SPacketSyncRender data, final IPayloadContext ctx) {
+    ctx.enqueueWork(() -> {
       ClientLevel world = Minecraft.getInstance().level;
 
       if (world != null) {
@@ -184,8 +151,8 @@ public class CuriosClientPayloadHandler {
     });
   }
 
-  public void handleSyncModifiers(final SPacketSyncModifiers data, final PlayPayloadContext ctx) {
-    handleData(ctx, () -> {
+  public void handleSyncModifiers(final SPacketSyncModifiers data, final IPayloadContext ctx) {
+    ctx.enqueueWork(() -> {
       ClientLevel world = Minecraft.getInstance().level;
 
       if (world != null) {
@@ -222,15 +189,15 @@ public class CuriosClientPayloadHandler {
     });
   }
 
-  public void handleSyncData(final SPacketSyncData data, final PlayPayloadContext ctx) {
-    handleData(ctx, () -> {
+  public void handleSyncData(final SPacketSyncData data, final IPayloadContext ctx) {
+    ctx.enqueueWork(() -> {
       CuriosSlotManager.applySyncPacket(data.slotData);
       CuriosEntityManager.applySyncPacket(data.entityData);
     });
   }
 
-  public void handleSyncCurios(final SPacketSyncCurios data, final PlayPayloadContext ctx) {
-    handleData(ctx, () -> {
+  public void handleSyncCurios(final SPacketSyncCurios data, final IPayloadContext ctx) {
+    ctx.enqueueWork(() -> {
       ClientLevel world = Minecraft.getInstance().level;
 
       if (world != null) {
@@ -259,8 +226,8 @@ public class CuriosClientPayloadHandler {
     });
   }
 
-  public void handleGrabbedItem(final SPacketGrabbedItem data, final PlayPayloadContext ctx) {
-    handleData(ctx, () -> {
+  public void handleGrabbedItem(final SPacketGrabbedItem data, final IPayloadContext ctx) {
+    ctx.enqueueWork(() -> {
       LocalPlayer clientPlayer = Minecraft.getInstance().player;
 
       if (clientPlayer != null) {
@@ -269,8 +236,8 @@ public class CuriosClientPayloadHandler {
     });
   }
 
-  public void handleSyncStack(final SPacketSyncStack data, final PlayPayloadContext ctx) {
-    handleData(ctx, () -> {
+  public void handleSyncStack(final SPacketSyncStack data, final IPayloadContext ctx) {
+    ctx.enqueueWork(() -> {
       ClientLevel world = Minecraft.getInstance().level;
 
       if (world != null) {

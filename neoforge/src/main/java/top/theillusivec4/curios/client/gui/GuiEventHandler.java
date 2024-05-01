@@ -86,7 +86,7 @@ public class GuiEventHandler {
     Slot slot = gui.findSlot(evt.getMouseX(), evt.getMouseY());
 
     if (destroyItemSlot != null && slot == destroyItemSlot) {
-      PacketDistributor.SERVER.noArg().send(new CPacketDestroy());
+      PacketDistributor.sendToServer(new CPacketDestroy());
     }
   }
 }

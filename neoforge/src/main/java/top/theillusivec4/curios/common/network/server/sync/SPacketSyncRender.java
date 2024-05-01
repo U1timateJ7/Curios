@@ -20,7 +20,9 @@
 package top.theillusivec4.curios.common.network.server.sync;
 
 import javax.annotation.Nonnull;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import top.theillusivec4.curios.CuriosConstants;
@@ -28,24 +30,18 @@ import top.theillusivec4.curios.CuriosConstants;
 public record SPacketSyncRender(int entityId, String curioId, int slotId, boolean value) implements
     CustomPacketPayload {
 
-  public static final ResourceLocation ID =
-      new ResourceLocation(CuriosConstants.MOD_ID, "sync_render");
+  public static final Type<SPacketSyncRender> TYPE =
+      new Type<>(new ResourceLocation(CuriosConstants.MOD_ID, "sync_render"));
 
-  public SPacketSyncRender(final FriendlyByteBuf buf) {
-    this(buf.readInt(), buf.readUtf(), buf.readInt(), buf.readBoolean());
-  }
-
-  @Override
-  public void write(@Nonnull FriendlyByteBuf buf) {
-    buf.writeInt(this.entityId());
-    buf.writeUtf(this.curioId());
-    buf.writeInt(this.slotId());
-    buf.writeBoolean(this.value());
-  }
+  public static final StreamCodec<RegistryFriendlyByteBuf, SPacketSyncRender> STREAM_CODEC =
+      StreamCodec.composite(ByteBufCodecs.INT, SPacketSyncRender::entityId,
+          ByteBufCodecs.STRING_UTF8, SPacketSyncRender::curioId, ByteBufCodecs.INT,
+          SPacketSyncRender::slotId, ByteBufCodecs.BOOL, SPacketSyncRender::value,
+          SPacketSyncRender::new);
 
   @Nonnull
   @Override
-  public ResourceLocation id() {
-    return ID;
+  public Type<? extends CustomPacketPayload> type() {
+    return TYPE;
   }
 }

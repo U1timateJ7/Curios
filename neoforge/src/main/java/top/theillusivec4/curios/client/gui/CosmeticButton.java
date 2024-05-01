@@ -20,14 +20,14 @@ public class CosmeticButton extends ImageButton {
   public static final WidgetSprites ON =
       new WidgetSprites(new ResourceLocation(CuriosApi.MODID, "cosmetic_on"),
           new ResourceLocation(CuriosApi.MODID, "cosmetic_on_highlighted"));
-  private final CuriosScreenV2 parentGui;
+  private final CuriosScreen parentGui;
 
-  CosmeticButton(CuriosScreenV2 parentGui, int xIn, int yIn, int widthIn, int heightIn) {
+  CosmeticButton(CuriosScreen parentGui, int xIn, int yIn, int widthIn, int heightIn) {
     super(xIn, yIn, widthIn, heightIn, OFF,
         (button) -> {
           parentGui.getMenu().toggleCosmetics();
-          PacketDistributor.SERVER.noArg()
-              .send(new CPacketToggleCosmetics(parentGui.getMenu().containerId));
+          PacketDistributor.sendToServer(
+              new CPacketToggleCosmetics(parentGui.getMenu().containerId));
         });
     this.parentGui = parentGui;
     this.setTooltip(Tooltip.create(Component.translatable("gui.curios.toggle.cosmetics")));

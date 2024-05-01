@@ -36,7 +36,9 @@ import net.minecraft.world.item.Item;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModLoadingContext;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
@@ -52,7 +54,7 @@ import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlerEvent;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.CuriosCapability;
 import top.theillusivec4.curios.api.SlotTypeMessage;
@@ -64,7 +66,6 @@ import top.theillusivec4.curios.client.CuriosClientConfig;
 import top.theillusivec4.curios.client.IconHelper;
 import top.theillusivec4.curios.client.KeyRegistry;
 import top.theillusivec4.curios.client.gui.CuriosScreen;
-import top.theillusivec4.curios.client.gui.CuriosScreenV2;
 import top.theillusivec4.curios.client.gui.GuiEventHandler;
 import top.theillusivec4.curios.client.render.CuriosLayer;
 import top.theillusivec4.curios.common.CuriosConfig;
@@ -87,8 +88,8 @@ import top.theillusivec4.curios.server.command.CuriosSelectorOptions;
 @Mod(CuriosConstants.MOD_ID)
 public class Curios {
 
-  public Curios(IEventBus eventBus) {
-    CuriosRegistry.init();
+  public Curios(IEventBus eventBus, ModContainer modContainer) {
+    CuriosRegistry.init(eventBus);
     eventBus.addListener(this::setup);
     eventBus.addListener(this::process);
     eventBus.addListener(this::registerCaps);
@@ -97,13 +98,13 @@ public class Curios {
     NeoForge.EVENT_BUS.addListener(this::serverStopped);
     NeoForge.EVENT_BUS.addListener(this::registerCommands);
     NeoForge.EVENT_BUS.addListener(this::reload);
-    ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, CuriosClientConfig.CLIENT_SPEC);
-    ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, CuriosConfig.COMMON_SPEC);
-    ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, CuriosConfig.SERVER_SPEC);
+    modContainer.registerConfig(ModConfig.Type.CLIENT, CuriosClientConfig.CLIENT_SPEC);
+    modContainer.registerConfig(ModConfig.Type.COMMON, CuriosConfig.COMMON_SPEC);
+    modContainer.registerConfig(ModConfig.Type.SERVER, CuriosConfig.SERVER_SPEC);
   }
 
-  private void registerPayloadHandler(final RegisterPayloadHandlerEvent evt) {
-    NetworkHandler.register(evt.registrar(CuriosConstants.MOD_ID));
+  private void registerPayloadHandler(final RegisterPayloadHandlersEvent evt) {
+    NetworkHandler.register(evt.registrar("1.0"));
   }
 
   private void setup(FMLCommonSetupEvent evt) {
@@ -204,7 +205,7 @@ public class Curios {
     });
   }
 
-  @Mod.EventBusSubscriber(modid = CuriosConstants.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
+  @EventBusSubscriber(modid = CuriosConstants.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
   public static class ClientProxy {
 
     @SubscribeEvent
@@ -221,7 +222,6 @@ public class Curios {
 
     @SubscribeEvent
     public static void registerMenuScreens(final RegisterMenuScreensEvent evt) {
-      evt.register(CuriosRegistry.CURIO_MENU_NEW.get(), CuriosScreenV2::new);
       evt.register(CuriosRegistry.CURIO_MENU.get(), CuriosScreen::new);
     }
 

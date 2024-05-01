@@ -46,7 +46,7 @@ public class MixinApplyBonusCount {
       method = "run")
   private int curios$applyFortune(int enchantmentLevel, ItemStack stack, LootContext lootContext) {
 
-    if (this.enchantment.value() == Enchantments.BLOCK_FORTUNE) {
+    if (this.enchantment.value() == Enchantments.FORTUNE) {
       return enchantmentLevel + CuriosUtilMixinHooks.getFortuneLevel(lootContext);
     } else {
       return enchantmentLevel;

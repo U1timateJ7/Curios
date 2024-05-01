@@ -24,14 +24,32 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import top.theillusivec4.curios.CuriosConstants;
 
 public class SPacketSyncData implements CustomPacketPayload {
 
-  public static final ResourceLocation ID =
-      new ResourceLocation(CuriosConstants.MOD_ID, "sync_data");
+  public static final Type<SPacketSyncData> TYPE =
+      new Type<>(new ResourceLocation(CuriosConstants.MOD_ID, "sync_data"));
+  public static final StreamCodec<RegistryFriendlyByteBuf, SPacketSyncData> STREAM_CODEC =
+      new StreamCodec<>() {
+        @Nonnull
+        @Override
+        public SPacketSyncData decode(@Nonnull RegistryFriendlyByteBuf buf) {
+          return new SPacketSyncData(buf);
+        }
+
+        @Override
+        public void encode(@Nonnull RegistryFriendlyByteBuf buf, SPacketSyncData packet) {
+          CompoundTag tag = new CompoundTag();
+          tag.put("SlotData", packet.slotData);
+          tag.put("EntityData", packet.entityData);
+          buf.writeNbt(tag);
+        }
+      };
 
   public final ListTag slotData;
   public final ListTag entityData;
@@ -53,17 +71,9 @@ public class SPacketSyncData implements CustomPacketPayload {
     }
   }
 
-  @Override
-  public void write(@Nonnull FriendlyByteBuf buf) {
-    CompoundTag tag = new CompoundTag();
-    tag.put("SlotData", this.slotData);
-    tag.put("EntityData", this.entityData);
-    buf.writeNbt(tag);
-  }
-
   @Nonnull
   @Override
-  public ResourceLocation id() {
-    return ID;
+  public Type<? extends CustomPacketPayload> type() {
+    return TYPE;
   }
 }
