@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2023 C4
+ * Copyright (c) 2018-2024 C4
  *
  * This file is part of Curios, a mod made for Minecraft.
  *
@@ -15,6 +15,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with Curios.  If not, see <https://www.gnu.org/licenses/>.
+ *
  */
 
 package top.theillusivec4.curios.common.network.server;
