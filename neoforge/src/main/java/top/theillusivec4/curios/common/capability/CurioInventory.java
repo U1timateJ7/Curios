@@ -87,24 +87,20 @@ public class CurioInventory implements INBTSerializable<CompoundTag> {
           while (index < newStacksHandler.getSlots() && index < prevStacksHandler
               .getSlots()) {
             ItemStack prevStack = prevStacksHandler.getStacks().getStackInSlot(index);
-            NonNullList<Boolean> renderStates = newStacksHandler.getRenders();
-            SlotContext slotContext = new SlotContext(identifier, livingEntity, index, false,
-                renderStates.size() > index && renderStates.get(index));
 
             if (!prevStack.isEmpty()) {
 
-              if (CuriosApi.isStackValid(slotContext, prevStack)) {
+              if (newStacksHandler.getStacks().isItemValid(index, prevStack)) {
                 newStacksHandler.getStacks().setStackInSlot(index, prevStack);
               } else {
                 this.curiosItemHandler.loseInvalidStack(prevStack);
               }
             }
             ItemStack prevCosmetic = prevStacksHandler.getCosmeticStacks().getStackInSlot(index);
-            slotContext = new SlotContext(identifier, livingEntity, index, true, true);
 
             if (!prevCosmetic.isEmpty()) {
 
-              if (CuriosApi.isStackValid(slotContext, prevCosmetic)) {
+              if (newStacksHandler.getStacks().isItemValid(index, prevCosmetic)) {
                 newStacksHandler.getCosmeticStacks().setStackInSlot(index,
                     prevStacksHandler.getCosmeticStacks().getStackInSlot(index));
               } else {

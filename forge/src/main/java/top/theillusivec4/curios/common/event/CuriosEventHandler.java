@@ -59,24 +59,26 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.LevelAccessor;
-import net.neoforged.bus.api.EventPriority;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.OnDatapackSyncEvent;
-import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
-import net.neoforged.neoforge.event.entity.living.EnderManAngerEvent;
-import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
-import net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent;
-import net.neoforged.neoforge.event.entity.living.LootingLevelEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerXpEvent;
-import net.neoforged.neoforge.event.level.BlockEvent;
-import net.neoforged.neoforge.event.tick.EntityTickEvent;
-import net.neoforged.neoforge.event.tick.LevelTickEvent;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.AttachCapabilitiesEvent;
+import net.minecraftforge.event.OnDatapackSyncEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.entity.living.EnderManAngerEvent;
+import net.minecraftforge.event.entity.living.LivingDropsEvent;
+import net.minecraftforge.event.entity.living.LivingEquipmentChangeEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.event.entity.living.LootingLevelEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.entity.player.PlayerXpEvent;
+import net.minecraftforge.event.level.BlockEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.items.ItemHandlerHelper;
+import net.minecraftforge.network.PacketDistributor;
 import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.CuriosCapability;
 import top.theillusivec4.curios.api.SlotAttribute;
 import top.theillusivec4.curios.api.SlotContext;
 import top.theillusivec4.curios.api.event.CurioChangeEvent;
@@ -91,9 +93,11 @@ import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
 import top.theillusivec4.curios.api.type.inventory.IDynamicStackHandler;
 import top.theillusivec4.curios.common.CuriosConfig;
 import top.theillusivec4.curios.common.CuriosRegistry;
+import top.theillusivec4.curios.common.capability.CurioInventoryCapability;
 import top.theillusivec4.curios.common.data.CuriosEntityManager;
 import top.theillusivec4.curios.common.data.CuriosSlotManager;
 import top.theillusivec4.curios.common.inventory.container.CuriosContainer;
+import top.theillusivec4.curios.common.network.NetworkHandler;
 import top.theillusivec4.curios.common.network.server.SPacketSetIcons;
 import top.theillusivec4.curios.common.network.server.sync.SPacketSyncCurios;
 import top.theillusivec4.curios.common.network.server.sync.SPacketSyncData;
@@ -191,7 +195,8 @@ public class CuriosEventHandler {
       Collection<ISlotType> slotTypes = CuriosApi.getPlayerSlots(playerEntity).values();
       Map<String, ResourceLocation> icons = new HashMap<>();
       slotTypes.forEach(type -> icons.put(type.getIdentifier(), type.getIcon()));
-      PacketDistributor.sendToPlayer(serverPlayer, new SPacketSetIcons(icons));
+      NetworkHandler.INSTANCE.send(new SPacketSetIcons(icons),
+          PacketDistributor.PLAYER.with(serverPlayer));
     }
   }
 
@@ -202,13 +207,12 @@ public class CuriosEventHandler {
       PlayerList playerList = evt.getPlayerList();
 
       for (ServerPlayer player : playerList.getPlayers()) {
-        PacketDistributor.sendToPlayer(player,
-            new SPacketSyncData(CuriosSlotManager.getSyncPacket(),
-                CuriosEntityManager.getSyncPacket()));
+        NetworkHandler.INSTANCE.send(new SPacketSyncData(CuriosSlotManager.getSyncPacket(),
+            CuriosEntityManager.getSyncPacket()), PacketDistributor.PLAYER.with(player));
         CuriosApi.getCuriosInventory(player).ifPresent(handler -> {
           handler.readTag(handler.writeTag());
-          PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-              new SPacketSyncCurios(player.getId(), handler.getCurios()));
+          NetworkHandler.INSTANCE.send(new SPacketSyncCurios(player.getId(), handler.getCurios()),
+              PacketDistributor.TRACKING_ENTITY_AND_SELF.with(player));
 
           if (player.containerMenu instanceof ICuriosMenu curiosContainer) {
             curiosContainer.resetSlots();
@@ -217,17 +221,18 @@ public class CuriosEventHandler {
         Collection<ISlotType> slotTypes = CuriosApi.getPlayerSlots(player).values();
         Map<String, ResourceLocation> icons = new HashMap<>();
         slotTypes.forEach(type -> icons.put(type.getIdentifier(), type.getIcon()));
-        PacketDistributor.sendToPlayer(player, new SPacketSetIcons(icons));
+        NetworkHandler.INSTANCE.send(new SPacketSetIcons(icons),
+            PacketDistributor.PLAYER.with(player));
       }
     } else {
       ServerPlayer mp = evt.getPlayer();
-      PacketDistributor.sendToPlayer(mp, new SPacketSyncData(CuriosSlotManager.getSyncPacket(),
-          CuriosEntityManager.getSyncPacket()));
+      NetworkHandler.INSTANCE.send(new SPacketSyncData(CuriosSlotManager.getSyncPacket(),
+          CuriosEntityManager.getSyncPacket()), PacketDistributor.PLAYER.with(mp));
       CuriosApi.getCuriosInventory(mp).ifPresent(
           handler -> {
             handler.readTag(handler.writeTag());
-            PacketDistributor.sendToPlayer(mp,
-                new SPacketSyncCurios(mp.getId(), handler.getCurios()));
+            NetworkHandler.INSTANCE.send(new SPacketSyncCurios(mp.getId(), handler.getCurios()),
+                PacketDistributor.PLAYER.with(mp));
 
             if (mp.containerMenu instanceof ICuriosMenu curiosContainer) {
               curiosContainer.resetSlots();
@@ -236,7 +241,16 @@ public class CuriosEventHandler {
       Collection<ISlotType> slotTypes = CuriosApi.getPlayerSlots(mp).values();
       Map<String, ResourceLocation> icons = new HashMap<>();
       slotTypes.forEach(type -> icons.put(type.getIdentifier(), type.getIcon()));
-      PacketDistributor.sendToPlayer(mp, new SPacketSetIcons(icons));
+      NetworkHandler.INSTANCE.send(new SPacketSetIcons(icons), PacketDistributor.PLAYER.with(mp));
+    }
+  }
+
+  @SubscribeEvent
+  public void attachEntitiesCapabilities(AttachCapabilitiesEvent<Entity> evt) {
+
+    if (evt.getObject() instanceof LivingEntity livingEntity) {
+      evt.addCapability(CuriosCapability.ID_INVENTORY,
+          CurioInventoryCapability.createProvider(livingEntity));
     }
   }
 
@@ -247,7 +261,8 @@ public class CuriosEventHandler {
     if (entity instanceof ServerPlayer serverPlayerEntity) {
       CuriosApi.getCuriosInventory(serverPlayerEntity).ifPresent(handler -> {
         ServerPlayer mp = (ServerPlayer) entity;
-        PacketDistributor.sendToPlayer(mp, new SPacketSyncCurios(mp.getId(), handler.getCurios()));
+        NetworkHandler.INSTANCE.send(new SPacketSyncCurios(mp.getId(), handler.getCurios()),
+            PacketDistributor.PLAYER.with(mp));
       });
     } else if (entity instanceof LivingEntity livingEntity) {
       CuriosApi.getCuriosInventory(livingEntity).ifPresent(inv -> inv.readTag(inv.writeTag()));
@@ -256,14 +271,13 @@ public class CuriosEventHandler {
 
   @SubscribeEvent
   public void playerStartTracking(PlayerEvent.StartTracking evt) {
-
     Entity target = evt.getTarget();
     Player player = evt.getEntity();
 
     if (player instanceof ServerPlayer serverPlayer && target instanceof LivingEntity livingBase) {
-      CuriosApi.getCuriosInventory(livingBase).ifPresent(
-          handler -> PacketDistributor.sendToPlayer(serverPlayer,
-              new SPacketSyncCurios(target.getId(), handler.getCurios())));
+      CuriosApi.getCuriosInventory(livingBase).ifPresent(handler -> NetworkHandler.INSTANCE.send(
+          new SPacketSyncCurios(target.getId(), handler.getCurios()),
+          PacketDistributor.PLAYER.with(serverPlayer)));
     }
   }
 
@@ -292,7 +306,7 @@ public class CuriosEventHandler {
 
         DropRulesEvent dropRulesEvent = new DropRulesEvent(livingEntity, handler, evt.getSource(),
             evt.getLootingLevel(), evt.isRecentlyHit());
-        NeoForge.EVENT_BUS.post(dropRulesEvent);
+        MinecraftForge.EVENT_BUS.post(dropRulesEvent);
         List<Tuple<Predicate<ItemStack>, DropRule>> dropRules = dropRulesEvent.getOverrides();
         boolean keepInventory = false;
 
@@ -311,11 +325,10 @@ public class CuriosEventHandler {
           handleDrops(id, livingEntity, dropRules, stacksHandler.getRenders(),
               stacksHandler.getCosmeticStacks(), true, curioDrops, finalKeepInventory, evt);
         });
-        CurioDropsEvent dropsEvent = NeoForge.EVENT_BUS.post(
-            new CurioDropsEvent(livingEntity, handler, evt.getSource(), curioDrops,
-                evt.getLootingLevel(), evt.isRecentlyHit()));
 
-        if (!dropsEvent.isCanceled()) {
+        if (!MinecraftForge.EVENT_BUS.post(
+            new CurioDropsEvent(livingEntity, handler, evt.getSource(), curioDrops,
+                evt.getLootingLevel(), evt.isRecentlyHit()))) {
           drops.addAll(curioDrops);
         }
       });
@@ -400,10 +413,10 @@ public class CuriosEventHandler {
   }
 
   @SubscribeEvent
-  public void worldTick(LevelTickEvent.Post evt) {
+  public void worldTick(TickEvent.LevelTickEvent evt) {
 
-    if (evt.getLevel() instanceof ServerLevel && dirtyTags) {
-      PlayerList list = ((ServerLevel) evt.getLevel()).getServer().getPlayerList();
+    if (evt.level instanceof ServerLevel && dirtyTags) {
+      PlayerList list = ((ServerLevel) evt.level).getServer().getPlayerList();
 
       for (ServerPlayer player : list.getPlayers()) {
         CuriosApi.getCuriosInventory(player).ifPresent(handler -> {
@@ -438,9 +451,9 @@ public class CuriosEventHandler {
     DamageSource source = evt.getDamageSource();
 
     if (source != null && source.getEntity() instanceof LivingEntity living) {
-      evt.setLootingLevel(evt.getLootingLevel() +
-          CuriosApi.getCuriosInventory(living).map(handler -> handler
-              .getLootingLevel(source, evt.getEntity(), evt.getLootingLevel())).orElse(0));
+      evt.setLootingLevel(evt.getLootingLevel() + CuriosApi.getCuriosInventory(living)
+          .map(handler -> handler.getLootingLevel(source, evt.getEntity(), evt.getLootingLevel()))
+          .orElse(0));
     }
   }
 
@@ -500,7 +513,7 @@ public class CuriosEventHandler {
   }
 
   @SubscribeEvent
-  public void tick(EntityTickEvent.Post evt) {
+  public void tick(LivingEvent.LivingTickEvent evt) {
     Entity entity = evt.getEntity();
 
     if (entity instanceof LivingEntity livingEntity) {
@@ -545,7 +558,7 @@ public class CuriosEventHandler {
                 Optional<ICurio> prevCurio = CuriosApi.getCurio(prevStack);
                 syncCurios(livingEntity, stack, currentCurio, prevCurio, identifier, index, false,
                     renderStates.size() > index && renderStates.get(index), HandlerType.EQUIPMENT);
-                NeoForge.EVENT_BUS
+                MinecraftForge.EVENT_BUS
                     .post(new CurioChangeEvent(livingEntity, identifier, i, prevStack, stack));
                 UUID uuid = CuriosApi.getSlotUuid(slotContext);
                 AttributeMap attributeMap = livingEntity.getAttributes();
@@ -625,8 +638,9 @@ public class CuriosEventHandler {
               Set<ICurioStacksHandler> updates = handler.getUpdatingInventories();
 
               if (!updates.isEmpty()) {
-                PacketDistributor.sendToPlayersTrackingEntityAndSelf(livingEntity,
-                    new SPacketSyncModifiers(livingEntity.getId(), updates));
+                NetworkHandler.INSTANCE.send(
+                    new SPacketSyncModifiers(livingEntity.getId(), updates),
+                    PacketDistributor.TRACKING_ENTITY_AND_SELF.with(livingEntity));
                 updates.clear();
               }
             }
@@ -676,8 +690,8 @@ public class CuriosEventHandler {
       CompoundTag tag = curio.writeSyncData(slotContext);
       return tag != null ? tag : new CompoundTag();
     }).orElse(new CompoundTag()) : new CompoundTag();
-    PacketDistributor.sendToPlayersTrackingEntityAndSelf(livingEntity,
-        new SPacketSyncStack(livingEntity.getId(), identifier, index, stack, type.ordinal(),
-            syncTag));
+    NetworkHandler.INSTANCE.send(
+        new SPacketSyncStack(livingEntity.getId(), identifier, index, stack, type, syncTag),
+        PacketDistributor.TRACKING_ENTITY_AND_SELF.with(livingEntity));
   }
 }
