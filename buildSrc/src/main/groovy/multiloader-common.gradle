@@ -13,6 +13,18 @@ java {
     withJavadocJar()
 }
 
+task apiJar(type: Jar) {
+    archiveClassifier.set('api')
+    include 'top/theillusivec4/curios/api/**/*'
+    from(project(":common").sourceSets.main.allSource)
+    from sourceSets.main.allSource
+    from sourceSets.main.output
+}
+
+artifacts {
+    archives apiJar
+}
+
 repositories {
     mavenCentral()
     // https://docs.gradle.org/current/userguide/declaring_repositories.html#declaring_content_exclusively_found_in_one_repository
@@ -48,15 +60,19 @@ dependencies {
 }
 
 sourcesJar {
-    from(rootProject.file("LICENSE")) {
-        rename { "${it}_${mod_name}" }
-    }
+    from(rootProject.file("LICENSE"))
+    from(rootProject.file("COPYING"))
+    from(rootProject.file("COPYING.LESSER"))
+    from(rootProject.file("README.md"))
+    from(rootProject.file("CHANGELOG.md"))
 }
 
 jar {
-    from(rootProject.file("LICENSE")) {
-        rename { "${it}_${mod_name}" }
-    }
+    from(rootProject.file("LICENSE"))
+    from(rootProject.file("COPYING"))
+    from(rootProject.file("COPYING.LESSER"))
+    from(rootProject.file("README.md"))
+    from(rootProject.file("CHANGELOG.md"))
 
     manifest {
         attributes([
@@ -99,14 +115,27 @@ processResources {
 
 publishing {
     publications {
-        register('mavenJava', MavenPublication) {
+        mavenJava(MavenPublication) {
             artifactId base.archivesName.get()
-            from components.java
+            artifact jar
+            artifact sourcesJar
+            artifact apiJar
         }
     }
     repositories {
-        maven {
-            url System.getenv("local_maven_url")
+
+        if (project.hasProperty('urlMaven')) {
+
+            if (project.hasProperty('userMaven') && project.hasProperty('passMaven')) {
+
+                maven {
+                    url urlMaven
+                    credentials {
+                        username userMaven
+                        password passMaven
+                    }
+                }
+            }
         }
     }
 }
