@@ -31,6 +31,7 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
@@ -51,11 +52,12 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.ForgeRegistries;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.SlotTypeMessage;
 import top.theillusivec4.curios.api.client.CuriosRendererRegistry;
 import top.theillusivec4.curios.api.type.ISlotType;
-import top.theillusivec4.curios.api.type.capability.ICurio;
+import top.theillusivec4.curios.api.type.capability.ICurioItem;
 import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
 import top.theillusivec4.curios.client.ClientEventHandler;
 import top.theillusivec4.curios.client.CuriosClientConfig;
@@ -74,6 +76,7 @@ import top.theillusivec4.curios.common.network.NetworkHandler;
 import top.theillusivec4.curios.common.slottype.LegacySlotManager;
 import top.theillusivec4.curios.common.util.EquipCurioTrigger;
 import top.theillusivec4.curios.common.util.SetCurioAttributesFunction;
+import top.theillusivec4.curios.mixin.CuriosImplMixinHooks;
 import top.theillusivec4.curios.server.SlotHelper;
 import top.theillusivec4.curios.server.command.CurioArgumentType;
 import top.theillusivec4.curios.server.command.CuriosCommand;
@@ -110,7 +113,14 @@ public class Curios {
 
   private void registerCaps(RegisterCapabilitiesEvent evt) {
     evt.register(ICuriosItemHandler.class);
-    evt.register(ICurio.class);
+
+    for (Item item : ForgeRegistries.ITEMS.getValues()) {
+
+      if (item instanceof ICurioItem curioItem &&
+          CuriosImplMixinHooks.getCurioFromRegistry(item).isEmpty()) {
+        CuriosApi.registerCurio(item, curioItem);
+      }
+    }
   }
 
   private void process(InterModProcessEvent evt) {
