@@ -39,12 +39,13 @@ public class CPacketOpenCurios {
   }
 
   public static void encode(CPacketOpenCurios msg, FriendlyByteBuf buf) {
-    ItemStack.OPTIONAL_STREAM_CODEC.encode((RegistryFriendlyByteBuf) buf, msg.carried);
+    ItemStack.OPTIONAL_STREAM_CODEC.encode(
+        RegistryFriendlyByteBuf.decorator(NetworkHandler.REGISTRY_ACCESS).apply(buf), msg.carried);
   }
 
   public static CPacketOpenCurios decode(FriendlyByteBuf buf) {
-    return new CPacketOpenCurios(
-        ItemStack.OPTIONAL_STREAM_CODEC.decode((RegistryFriendlyByteBuf) buf));
+    return new CPacketOpenCurios(ItemStack.OPTIONAL_STREAM_CODEC.decode(
+        RegistryFriendlyByteBuf.decorator(NetworkHandler.REGISTRY_ACCESS).apply(buf)));
   }
 
   public static void handle(CPacketOpenCurios msg, CustomPayloadEvent.Context ctx) {

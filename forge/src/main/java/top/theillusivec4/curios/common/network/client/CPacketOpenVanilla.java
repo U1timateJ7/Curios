@@ -38,11 +38,13 @@ public class CPacketOpenVanilla {
   }
 
   public static void encode(CPacketOpenVanilla msg, FriendlyByteBuf buf) {
-    ItemStack.OPTIONAL_STREAM_CODEC.encode((RegistryFriendlyByteBuf) buf, msg.carried);
+    ItemStack.OPTIONAL_STREAM_CODEC.encode(
+        RegistryFriendlyByteBuf.decorator(NetworkHandler.REGISTRY_ACCESS).apply(buf), msg.carried);
   }
 
   public static CPacketOpenVanilla decode(FriendlyByteBuf buf) {
-    return new CPacketOpenVanilla(ItemStack.OPTIONAL_STREAM_CODEC.decode((RegistryFriendlyByteBuf) buf));
+    return new CPacketOpenVanilla(ItemStack.OPTIONAL_STREAM_CODEC.decode(
+        RegistryFriendlyByteBuf.decorator(NetworkHandler.REGISTRY_ACCESS).apply(buf)));
   }
 
   public static void handle(CPacketOpenVanilla msg, CustomPayloadEvent.Context ctx) {

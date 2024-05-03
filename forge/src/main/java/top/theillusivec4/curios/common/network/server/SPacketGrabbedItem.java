@@ -26,6 +26,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.network.CustomPayloadEvent;
+import top.theillusivec4.curios.common.network.NetworkHandler;
 
 public class SPacketGrabbedItem {
 
@@ -36,12 +37,13 @@ public class SPacketGrabbedItem {
   }
 
   public static void encode(SPacketGrabbedItem msg, FriendlyByteBuf buf) {
-    ItemStack.OPTIONAL_STREAM_CODEC.encode((RegistryFriendlyByteBuf) buf, msg.stack);
+    ItemStack.OPTIONAL_STREAM_CODEC.encode(
+        RegistryFriendlyByteBuf.decorator(NetworkHandler.REGISTRY_ACCESS).apply(buf), msg.stack);
   }
 
   public static SPacketGrabbedItem decode(FriendlyByteBuf buf) {
-    return new SPacketGrabbedItem(
-        ItemStack.OPTIONAL_STREAM_CODEC.decode((RegistryFriendlyByteBuf) buf));
+    return new SPacketGrabbedItem(ItemStack.OPTIONAL_STREAM_CODEC.decode(
+        RegistryFriendlyByteBuf.decorator(NetworkHandler.REGISTRY_ACCESS).apply(buf)));
   }
 
   public static void handle(SPacketGrabbedItem msg, CustomPayloadEvent.Context ctx) {

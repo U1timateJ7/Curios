@@ -131,6 +131,7 @@ public class Curios {
 
   private void serverAboutToStart(ServerAboutToStartEvent evt) {
     CuriosApi.setSlotHelper(new SlotHelper());
+    NetworkHandler.REGISTRY_ACCESS = evt.getServer().registryAccess();
     Set<String> slotIds = new HashSet<>();
 
     for (ISlotType value : CuriosSlotManager.SERVER.getSlots().values()) {

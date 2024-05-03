@@ -32,6 +32,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.network.CustomPayloadEvent;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.SlotContext;
+import top.theillusivec4.curios.common.network.NetworkHandler;
 
 public class SPacketSyncStack {
 
@@ -56,14 +57,16 @@ public class SPacketSyncStack {
     buf.writeInt(msg.entityId);
     buf.writeUtf(msg.curioId);
     buf.writeInt(msg.slotId);
-    ItemStack.OPTIONAL_STREAM_CODEC.encode((RegistryFriendlyByteBuf) buf, msg.stack);
+    ItemStack.OPTIONAL_STREAM_CODEC.encode(
+        RegistryFriendlyByteBuf.decorator(NetworkHandler.REGISTRY_ACCESS).apply(buf), msg.stack);
     buf.writeInt(msg.handlerType);
     buf.writeNbt(msg.compound);
   }
 
   public static SPacketSyncStack decode(FriendlyByteBuf buf) {
     return new SPacketSyncStack(buf.readInt(), buf.readUtf(), buf.readInt(),
-        ItemStack.OPTIONAL_STREAM_CODEC.decode((RegistryFriendlyByteBuf) buf),
+        ItemStack.OPTIONAL_STREAM_CODEC.decode(
+            RegistryFriendlyByteBuf.decorator(NetworkHandler.REGISTRY_ACCESS).apply(buf)),
         HandlerType.fromValue(buf.readInt()), buf.readNbt());
   }
 

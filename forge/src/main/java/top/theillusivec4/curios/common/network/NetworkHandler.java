@@ -22,8 +22,10 @@ package top.theillusivec4.curios.common.network;
 
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.event.network.CustomPayloadEvent;
 import net.minecraftforge.network.Channel;
 import net.minecraftforge.network.ChannelBuilder;
@@ -51,6 +53,7 @@ public class NetworkHandler {
   private static final int PTC_VERSION = 1;
 
   public static SimpleChannel INSTANCE;
+  public static RegistryAccess REGISTRY_ACCESS;
 
   public static void register() {
 
