@@ -18,6 +18,6 @@ This is a copy of the changelog for the most recent version. For the full versio
 - [API] Changed `CurioEquipEvent` and `CurioUnequipEvent` to `CurioCanEquipEvent` and `CurioCanUnequipEvent`
 - [API] Added `HolderLookup.Provider` to the signatures of `IDynamicStackHandler#serializeNbt` and `IDynamicStackHandler#deserializeNbt`
 ### Removed
-- Removed `addModifier`, `addSlotModifier`, and `getAttributeModifiers` methods from `ICuriosHelper`, use the appropriate methods in `CuriosApi` instead
-- [Forge] Forge removed stack capabilities so curios can now only be registered through `CuriosApi#registerCurio`or implementing `ICurioItem` on the item
-- [Forge] Removed `CuriosApi#createCurioProvider`
+- Removed `addModifier`, `addSlotModifier`, and `getAttributeModifiers` methods from `ICuriosHelper`, use the methods in `CuriosApi` with the same name instead
+- [Forge - API] Forge removed stack capabilities so curios can now only be registered through `CuriosApi#registerCurio`or implementing `ICurioItem` on the item
+- [Forge - API] Removed `CuriosApi#createCurioProvider`

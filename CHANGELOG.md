@@ -20,7 +20,7 @@ Prior to version 5.2.0, this projected used [Forge Recommended Versioning](https
 - [API] Changed `CurioEquipEvent` and `CurioUnequipEvent` to `CurioCanEquipEvent` and `CurioCanUnequipEvent`
 - [API] Added `HolderLookup.Provider` to the signatures of `IDynamicStackHandler#serializeNbt` and `IDynamicStackHandler#deserializeNbt`
 ### Removed
-- Removed `addModifier`, `addSlotModifier`, and `getAttributeModifiers` methods from `ICuriosHelper`, use the appropriate methods in `CuriosApi` instead
+- Removed `addModifier`, `addSlotModifier`, and `getAttributeModifiers` methods from `ICuriosHelper`, use the methods in `CuriosApi` with the same name instead
 - [Forge - API] Forge removed stack capabilities so curios can now only be registered through `CuriosApi#registerCurio`or implementing `ICurioItem` on the item
 - [Forge - API] Removed `CuriosApi#createCurioProvider`
 
