@@ -241,7 +241,7 @@ public class CuriosClientPackets {
         CuriosApi.getCuriosInventory(livingEntity)
             .flatMap(handler -> handler.getStacksHandler(data.curioId()))
             .ifPresent(stacksHandler -> {
-              ItemStack stack = data.stack();
+              ItemStack stack = data.stack().copy();
               CompoundTag compoundNBT = data.compoundTag();
               int slot = data.slotId();
               boolean cosmetic = SPacketSyncStack.HandlerType.fromValue(data.handlerType()) ==
@@ -254,13 +254,10 @@ public class CuriosClientPackets {
                         renderStates.size() > slot && renderStates.get(slot)), compoundNBT));
               }
 
-              if (!(livingEntity instanceof LocalPlayer)) {
-
-                if (cosmetic) {
-                  stacksHandler.getCosmeticStacks().setStackInSlot(slot, stack);
-                } else {
-                  stacksHandler.getStacks().setStackInSlot(slot, stack);
-                }
+              if (cosmetic) {
+                stacksHandler.getCosmeticStacks().setStackInSlot(slot, stack);
+              } else {
+                stacksHandler.getStacks().setStackInSlot(slot, stack);
               }
             });
       }
