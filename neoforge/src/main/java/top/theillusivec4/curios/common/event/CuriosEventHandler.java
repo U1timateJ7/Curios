@@ -64,6 +64,7 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.OnDatapackSyncEvent;
+import net.neoforged.neoforge.event.entity.EntityEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.living.EnderManAngerEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
@@ -242,6 +243,15 @@ public class CuriosEventHandler {
   }
 
   @SubscribeEvent
+  public void entityConstructing(EntityEvent.EntityConstructing evt) {
+    Entity entity = evt.getEntity();
+
+    if (entity instanceof LivingEntity livingEntity) {
+      CuriosApi.getCuriosInventory(livingEntity).ifPresent(inv -> inv.readTag(inv.writeTag()));
+    }
+  }
+
+  @SubscribeEvent
   public void entityJoinWorld(EntityJoinLevelEvent evt) {
     Entity entity = evt.getEntity();
 
@@ -250,8 +260,6 @@ public class CuriosEventHandler {
         ServerPlayer mp = (ServerPlayer) entity;
         PacketDistributor.sendToPlayer(mp, new SPacketSyncCurios(mp.getId(), handler.getCurios()));
       });
-    } else if (entity instanceof LivingEntity livingEntity) {
-      CuriosApi.getCuriosInventory(livingEntity).ifPresent(inv -> inv.readTag(inv.writeTag()));
     }
   }
 
