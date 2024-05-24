@@ -85,8 +85,8 @@ public class CuriosContainer extends RecipeBookMenu<CraftingContainer> implement
   private final ResultContainer craftResult = new ResultContainer();
   public int currentPage;
   public int totalPages;
-  public List<Integer> grid;
-  private List<ProxySlot> proxySlots;
+  public List<Integer> grid = new ArrayList<>();
+  private final List<ProxySlot> proxySlots = new ArrayList<>();
   private int moveToPage = -1;
   private int moveFromIndex = -1;
   public boolean hasCosmetics;
@@ -204,8 +204,8 @@ public class CuriosContainer extends RecipeBookMenu<CraftingContainer> implement
       int currentColumn = 1;
       int currentRow = 1;
       int slots = 0;
-      this.grid = new ArrayList<>();
-      this.proxySlots = new ArrayList<>();
+      this.grid.clear();
+      this.proxySlots.clear();
       int currentPage = 0;
       int endingIndex = startingIndex + maxSlotsPerPage;
 
