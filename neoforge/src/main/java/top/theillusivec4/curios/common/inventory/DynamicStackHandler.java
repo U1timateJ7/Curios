@@ -26,8 +26,8 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.neoforged.bus.api.Event;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.util.TriState;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.SlotContext;
@@ -65,12 +65,12 @@ public class DynamicStackHandler extends ItemStackHandler implements IDynamicSta
     SlotContext ctx = ctxBuilder.apply(slot);
     CurioCanEquipEvent equipEvent = new CurioCanEquipEvent(stack, ctx);
     NeoForge.EVENT_BUS.post(equipEvent);
-    Event.Result result = equipEvent.getEquipResult();
+    TriState result = equipEvent.getEquipResult();
 
-    if (result == Event.Result.DENY) {
+    if (result == TriState.FALSE) {
       return false;
     }
-    return result == Event.Result.ALLOW || (CuriosApi.isStackValid(ctx, stack) &&
+    return result == TriState.TRUE || (CuriosApi.isStackValid(ctx, stack) &&
         CuriosApi.getCurio(stack).map(curio -> curio.canEquip(ctx)).orElse(true) &&
         super.isItemValid(slot, stack));
   }
@@ -81,14 +81,14 @@ public class DynamicStackHandler extends ItemStackHandler implements IDynamicSta
     SlotContext ctx = ctxBuilder.apply(slot);
     CurioCanUnequipEvent unequipEvent = new CurioCanUnequipEvent(existing, ctx);
     NeoForge.EVENT_BUS.post(unequipEvent);
-    Event.Result result = unequipEvent.getUnequipResult();
+    TriState result = unequipEvent.getUnequipResult();
 
-    if (result == Event.Result.DENY) {
+    if (result == TriState.FALSE) {
       return ItemStack.EMPTY;
     }
     boolean isCreative = ctx.entity() instanceof Player player && player.isCreative();
 
-    if (result == Event.Result.ALLOW ||
+    if (result == TriState.TRUE ||
         ((existing.isEmpty() || isCreative || !EnchantmentHelper.hasBindingCurse(existing)) &&
             CuriosApi.getCurio(existing).map(curio -> curio.canUnequip(ctx)).orElse(true))) {
       return super.extractItem(slot, amount, simulate);
