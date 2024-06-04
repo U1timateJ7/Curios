@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 Prior to version 5.2.0, this projected used [Forge Recommended Versioning](https://mcforge.readthedocs.io/en/latest/conventions/versioning/).
 
+## [8.0.0-beta.5+1.20.6] - 2024.06.03
+### Fixed
+- Fixed API package references
+- [Forge] Fixed `ICurioItem` items not being registered properly
+
 ## [8.0.0-beta.4+1.20.6] - 2024.05.27
 ### Changed
 - [NeoForge] Refactored `CurioCanEquipEvent` and `CurioCanUnequipEvent` to use NeoForge's `TriState` enum as the result [#414](https://github.com/TheIllusiveC4/Curios/issues/414)
