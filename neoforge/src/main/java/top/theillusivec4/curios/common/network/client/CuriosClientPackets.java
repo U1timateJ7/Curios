@@ -227,7 +227,7 @@ public class CuriosClientPackets {
     LocalPlayer clientPlayer = Minecraft.getInstance().player;
 
     if (clientPlayer != null) {
-      clientPlayer.containerMenu.setCarried(data.stack());
+      clientPlayer.containerMenu.setCarried(data.stack().copy());
     }
   }
 
