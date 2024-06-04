@@ -51,6 +51,7 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import net.minecraftforge.fml.config.ModConfig.Type;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -92,6 +93,7 @@ public class Curios {
     eventBus.addListener(this::setup);
     eventBus.addListener(this::process);
     eventBus.addListener(this::registerCaps);
+    eventBus.addListener(this::loadComplete);
     MinecraftForge.EVENT_BUS.addListener(this::serverAboutToStart);
     MinecraftForge.EVENT_BUS.addListener(this::serverStopped);
     MinecraftForge.EVENT_BUS.addListener(this::registerCommands);
@@ -114,6 +116,9 @@ public class Curios {
 
   private void registerCaps(RegisterCapabilitiesEvent evt) {
     evt.register(ICuriosItemHandler.class);
+  }
+
+  private void loadComplete(final FMLLoadCompleteEvent evt) {
 
     for (Item item : ForgeRegistries.ITEMS.getValues()) {
 
