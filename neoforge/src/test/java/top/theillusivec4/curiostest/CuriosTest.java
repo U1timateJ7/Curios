@@ -27,6 +27,7 @@ import java.util.UUID;
 import javax.annotation.Nonnull;
 import net.minecraft.core.Holder;
 import net.minecraft.data.DataGenerator;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.damagesource.DamageSource;
@@ -58,6 +59,7 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.CuriosCapability;
+import top.theillusivec4.curios.api.CuriosTooltip;
 import top.theillusivec4.curios.api.SlotAttribute;
 import top.theillusivec4.curios.api.SlotContext;
 import top.theillusivec4.curios.api.SlotTypeMessage;
@@ -124,6 +126,15 @@ public class CuriosTest {
           stack.hurtAndBreak(1, livingEntity.getRandom(), livingEntity,
               () -> CuriosApi.broadcastCurioBreakEvent(slotContext));
         }
+      }
+
+      @Override
+      public List<Component> getAttributesTooltip(List<Component> tooltips) {
+        return new CuriosTooltip()
+            .appendAdditive(Component.literal("test1"))
+            .appendSubtractive(Component.literal("test2"))
+            .forSlots(this.getStack())
+            .build();
       }
     }, CuriosTestRegistry.CROWN.get());
 
