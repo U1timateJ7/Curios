@@ -1,0 +1,50 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license="LGPL-3.0-or-later"
+logoFile="curios_icon.png"
+logoBlur=false
+[[mods]]
+modId="curios"
+version="8.0.1+1.21"
+displayName="Curios API"
+#displayURL=""
+authors="C4, U1timateJ7"
+description='''A flexible and expandable accessory/equipment API for users and developers.'''
+[[mixins]]
+config = "curios.neoforge.mixins.json"
+[[mixins]]
+config = "curios.mixins.json"
+[[dependencies.curios]]
+modId="neoforge"
+type="required"
+versionRange="[21.0,)"
+ordering="NONE"
+side="BOTH"
+[[dependencies.curios]]
+modId="minecraft"
+type="required"
+versionRange="[1.21,1.22)"
+ordering="NONE"
+side="BOTH"
+[modproperties.curios]
+catalogueImageIcon="curios_icon.png"
+[[mods]]
+modId="curiostest"
+version="1"
+displayName="Curios Test Mod"
+authors="C4"
+description='''
+A test mod for Curios
+'''
+[[dependencies.curiostest]]
+    modId="neoforge"
+    type="required"
+    versionRange="[20.2,)"
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.curiostest]]
+    modId="minecraft"
+    type="required"
+    versionRange="[1.20.2,)"
+    ordering="NONE"
+    side="BOTH"

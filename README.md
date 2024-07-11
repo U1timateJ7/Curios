@@ -2,7 +2,9 @@
 
 ## Overview
 
-Curios is a flexible and expandable accessory/equipment API for users and developers. The purpose is to provide functionality for developers to add extra accessory/equipment slots in a convenient and compatible manner, as well as to give users the ability to configure these slots to their preferences. By default, Curios does not add any content except for an inventory GUI. There are no slots and only two items, the latter only being available through the Creative menu and primarily serving as examples for developers to use when coding their own integration.
+Curios is a flexible and expandable accessory/equipment API for users and developers. The purpose is to provide functionality for developers to add extra accessory/equipment slots in a convenient and compatible manner, as well as to give users the ability to configure these slots to their preferences. By default, Curios does not add any content except for an inventory GUI. There are no slots and only two items, the latter only being available through the Creative menu and primarily serving as examples for developers to use when coding their own integration.<br>
+
+This version is maintained and used by U1timateJ7 for use in his own mods. Original created by C4 of Illusive Soulworks
 
 ## Features
 
@@ -15,7 +17,7 @@ Curios is a flexible and expandable accessory/equipment API for users and develo
 
 ## Documentation
 
-* [1.20.x Curios Documentation](https://docs.illusivesoulworks.com/category/curios)
+* [Curios Documentation](https://docs.illusivesoulworks.com/category/curios)
 
 ## Adding to Your Project:
 
@@ -23,37 +25,12 @@ Add the following to your build.gradle file:
 ```
 repositories {
     maven {
-        url = "https://maven.theillusivec4.top/"
+        url = "https://maven.tintankgames.net/"
     }
 }
 ```
 
-### Forge
-```
-dependencies {
-    runtimeOnly fg.deobf("top.theillusivec4.curios:curios-forge:${version}")
-    compileOnly fg.deobf("top.theillusivec4.curios:curios-forge:${version}:api")
-}
-```
-
-Curios uses mixins and developers will need to make sure to tweak their run configurations in order to launch the game
-in their development environment with Curios as a dependency in Forge.
-
-#### 1. Add these lines to your run configurations
-
-Add both of these lines to both the `client {}` and `server {}` run configuration blocks in the `build.gradle`. These
-can be placed anywhere within each run configuration, the order does not matter.
-
-```
-property 'mixin.env.remapRefMap', 'true'
-property 'mixin.env.refMapRemappingFile', "${buildDir}/createSrgToMcp/output.srg"
-```
-
-#### 2. Regenerate your run configurations
-
-Run the Gradle task `genIntellijRuns`, `genEclipseRuns`, or `genVSCodeRuns` depending on the chosen IDE.
-
-### NeoForge (1.20.2+)
+### NeoForge (1.21+)
 ```
 dependencies {
     runtimeOnly "top.theillusivec4.curios:curios-neoforge:${version}"
