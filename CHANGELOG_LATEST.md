@@ -2,6 +2,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 This is a copy of the changelog for the most recent version. For the full version history, go [here](https://github.com/TheIllusiveC4/Curios/blob/1.20.6/CHANGELOG.md).
 
-## [8.0.1+1.21] - 2024.07.11
-### Changed
-- [API] Removed lootingLevel param from many places
+## [8.0.2+1.21] - 2024.07.11
+### Fixed
+- Fixed page buttons having a black texture
+- Fixed crash when applying identical curios with attributes

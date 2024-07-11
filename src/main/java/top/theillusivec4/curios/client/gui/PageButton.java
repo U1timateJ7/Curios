@@ -20,7 +20,6 @@
 
 package top.theillusivec4.curios.client.gui;
 
-import javax.annotation.Nonnull;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -31,10 +30,12 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import top.theillusivec4.curios.CuriosConstants;
 import top.theillusivec4.curios.common.network.client.CPacketPage;
 
+import javax.annotation.Nonnull;
+
 public class PageButton extends Button {
   private final CuriosScreen parentGui;
   private final Type type;
-  private static final ResourceLocation CURIO_INVENTORY = ResourceLocation.fromNamespaceAndPath(CuriosConstants.MOD_ID, "textures/gui/curios/inventory_revamp.png");
+  private static final ResourceLocation CURIO_INVENTORY = ResourceLocation.fromNamespaceAndPath(CuriosConstants.MOD_ID, "textures/gui/curios/inventory.png");
 
   public PageButton(CuriosScreen parentGui, int xIn, int yIn, int widthIn, int heightIn,
                     Type type) {

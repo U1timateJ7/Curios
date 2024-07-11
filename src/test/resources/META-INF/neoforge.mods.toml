@@ -5,7 +5,7 @@ logoFile="curios_icon.png"
 logoBlur=false
 [[mods]]
 modId="curios"
-version="8.0.1+1.21"
+version="8.0.2+1.21"
 displayName="Curios API"
 #displayURL=""
 authors="C4, U1timateJ7"
