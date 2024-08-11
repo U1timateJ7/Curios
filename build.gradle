@@ -98,9 +98,9 @@ configurations {
 dependencies {
     implementation "net.neoforged:neoforge:${neo_version}"
 
-    localRuntime "mezz.jei:jei-${project.minecraft_version}-neoforge:${project.jei_version}"
-    compileOnly "mezz.jei:jei-${project.minecraft_version}-common-api:${project.jei_version}"
-    compileOnly "mezz.jei:jei-${project.minecraft_version}-neoforge-api:${project.jei_version}"
+    localRuntime "mezz.jei:jei-1.21-neoforge:${project.jei_version}"
+    compileOnly "mezz.jei:jei-1.21-common-api:${project.jei_version}"
+    compileOnly "mezz.jei:jei-1.21-neoforge-api:${project.jei_version}"
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
